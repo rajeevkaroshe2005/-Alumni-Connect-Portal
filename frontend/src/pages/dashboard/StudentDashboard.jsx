@@ -60,27 +60,34 @@ export const StudentDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#244B3A] via-[#2D5845] to-[#1C3B2E] rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden border border-[#244B3A]/20">
         <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-700/60 text-indigo-200 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-300" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[#C4A878] text-xs font-semibold border border-[#C4A878]/30">
+            <Sparkles className="w-3.5 h-3.5 text-[#C4A878]" />
             <span>AI-Driven Student Workspace</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Welcome back, {user?.profile?.first_name || 'Student'}!
           </h1>
-          <p className="text-sm text-indigo-200/90 leading-relaxed">
+          <p className="text-sm text-[#F5F1E8]/90 leading-relaxed">
             {user?.student_detail?.degree || 'Undergraduate'} in {user?.student_detail?.department || 'Engineering'} • Class of {user?.student_detail?.expected_graduation_year || 2027}.
             Here are your personalized alumni recommendations and active career milestones.
           </p>
 
           <div className="flex flex-wrap gap-3 pt-2">
             <Link
-              to="/ai-assistant"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white font-semibold rounded-xl text-xs shadow transition"
+              to="/resume-scanner"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#C4A878] hover:bg-[#B39767] text-[#244B3A] font-bold rounded-xl text-xs shadow transition"
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-[#244B3A]" />
               <span>Resume & Skill Gap Analysis</span>
+            </Link>
+            <Link
+              to="/ai"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl text-xs border border-white/20 transition"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#C4A878]" />
+              <span>AI Recommendations</span>
             </Link>
             <Link
               to="/mentorship"

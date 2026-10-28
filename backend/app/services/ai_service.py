@@ -181,6 +181,7 @@ class AIService:
 
             m_dict = rec['mentor_profile'].to_dict()
             m_dict['recommendation_score'] = composite_score
+            m_dict['match_score'] = round(composite_score / 100.0, 3)
             m_dict['match_percentage'] = min(max(int(composite_score), 20), 98)
             m_dict['matched_skills'] = [s.title() for s in common_skills]
             m_dict['reasons'] = reasons
@@ -261,7 +262,8 @@ class AIService:
                 reasons.append("Matches your degree track and foundational background")
 
             j_dict = rec['job'].to_dict()
-            j_dict['match_score'] = score
+            j_dict['raw_score'] = score
+            j_dict['match_score'] = round(score / 100.0, 3)
             j_dict['match_percentage'] = min(max(int(score), 15), 99)
             j_dict['matched_skills'] = [m.title() for m in matched]
             j_dict['missing_skills'] = [m.title() for m in missing]
@@ -269,7 +271,7 @@ class AIService:
 
             results.append(j_dict)
 
-        results.sort(key=lambda x: x['match_score'], reverse=True)
+        results.sort(key=lambda x: x['match_percentage'], reverse=True)
         return results[:limit]
 
     @classmethod
@@ -329,7 +331,9 @@ class AIService:
         roadmap = [
             {
                 'phase': 'Phase 1: Skill Gap Remediation',
+                'title': f"Bridge missing required competencies: {', '.join([s.title() for s in missing_skills[:4]]) if missing_skills else 'Advanced domain specializations'}",
                 'focus': f"Bridge missing required competencies: {', '.join([s.title() for s in missing_skills[:4]]) if missing_skills else 'Advanced domain specializations'}",
+                'timeline': 'Weeks 1 - 2',
                 'actions': [
                     f"Complete targeted documentation tutorials or practical mini-courses in {missing_skills[0].title()}." if missing_skills else "Review system architecture patterns.",
                     "Build a working proof-of-concept demonstrating practical usage of these concepts.",
@@ -337,7 +341,9 @@ class AIService:
             },
             {
                 'phase': 'Phase 2: Project Portfolio & Evidence',
+                'title': 'Showcase practical application for prospective employers',
                 'focus': 'Showcase practical application for prospective employers',
+                'timeline': 'Weeks 3 - 4',
                 'actions': [
                     f"Implement an end-to-end project integrating {matched_skills[0].title() if matched_skills else 'fullstack development'} with the required tech stack.",
                     "Push code to GitHub with clean documentation, tests, and a deployed demo link.",
@@ -345,7 +351,9 @@ class AIService:
             },
             {
                 'phase': 'Phase 3: Alumni Mentorship & Network Outreach',
+                'title': 'Connect with alumni working in target roles',
                 'focus': 'Connect with alumni working in target roles',
+                'timeline': 'Weeks 5 - 6',
                 'actions': [
                     f"Book a 1-on-1 mentorship session with alumni in {job.company} or similar industries.",
                     "Request a mock technical resume critique and advice on specific interview rounds.",
@@ -353,7 +361,9 @@ class AIService:
             },
             {
                 'phase': 'Phase 4: Interview Preparation & Application',
-                'focus': 'Tailored interview readiness',
+                'title': 'Tailored interview readiness & referral pitch',
+                'focus': 'Tailored interview readiness & referral pitch',
+                'timeline': 'Weeks 7 - 8',
                 'actions': [
                     "Prepare STAR method behavioral responses addressing real project challenges.",
                     f"Submit your updated portfolio application for {job.title}.",
@@ -364,12 +374,17 @@ class AIService:
         return {
             'job_id': job.id,
             'job_title': job.title,
+            'target_job_title': job.title,
             'company': job.company,
+            'match_ratio': round(match_ratio, 3),
+            'match_score': round(match_ratio, 3),
             'match_percentage': match_percentage,
+            'required_skills_count': len(job_skills),
             'matched_skills': [s.title() for s in matched_skills],
             'missing_skills': [s.title() for s in missing_skills],
             'gap_severity': 'Low' if match_percentage >= 70 else ('Moderate' if match_percentage >= 40 else 'High'),
             'roadmap': roadmap,
+            'career_roadmap': roadmap,
         }
 
     # ==========================================

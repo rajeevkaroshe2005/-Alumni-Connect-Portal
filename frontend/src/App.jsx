@@ -244,6 +244,10 @@ export default function App() {
                   }
                 />
                 <Route
+                  path="/ai-assistant"
+                  element={<Navigate to="/resume-scanner" replace />}
+                />
+                <Route
                   path="/career-predictor"
                   element={
                     <ProtectedRoute>
