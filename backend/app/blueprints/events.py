@@ -1,8 +1,10 @@
 import datetime
+import uuid
 from flask import Blueprint, request
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from .. import db
 from ..models import Event, EventRSVP, User
+from ..models.event_feedback import EventFeedback
 from ..utils.response import api_success, api_error
 from ..utils.decorators import jwt_required, roles_required
 from ..services.audit_service import AuditService
@@ -36,55 +38,60 @@ def get_events():
     q = q.order_by(Event.start_time.asc())
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
-    # Check RSVP status for current user
     user_id = request.user_id
-    rsvped_event_ids = set(
-        r.event_id for r in EventRSVP.query.filter_by(user_id=user_id, status='REGISTERED').all()
-    )
+    rsvps_map = {
+        r.event_id: r for r in EventRSVP.query.filter_by(user_id=user_id).all()
+    }
 
     items = []
     for evt in pagination.items:
         data = evt.to_dict()
-        data['is_registered'] = evt.id in rsvped_event_ids
+        user_rsvp = rsvps_map.get(evt.id)
+        data['is_registered'] = user_rsvp is not None and user_rsvp.status in ['REGISTERED', 'ATTENDED']
+        data['user_status'] = user_rsvp.status if user_rsvp else None
+        data['checkin_token'] = user_rsvp.checkin_token if user_rsvp else None
         items.append(data)
 
-    return api_success(
-        data={
-            'events': items,
-            'pagination': {
-                'page': pagination.page,
-                'per_page': pagination.per_page,
-                'total_items': pagination.total,
-                'total_pages': pagination.pages,
-                'has_next': pagination.has_next,
-                'has_prev': pagination.has_prev,
-            },
-        }
-    )
+    return api_success(data={
+        'events': items,
+        'total': pagination.total,
+        'page': page,
+        'pages': pagination.pages,
+    })
 
 
 @events_bp.route('/<int:event_id>', methods=['GET'])
 @jwt_required
 def get_event_detail(event_id):
-    """Retrieve event details."""
+    """Get single event with registration state for current user."""
     evt = Event.query.get(event_id)
     if not evt:
         return api_error("Event not found.", 404)
 
     user_id = request.user_id
-    data = evt.to_dict()
     rsvp = EventRSVP.query.filter_by(event_id=evt.id, user_id=user_id).first()
-    data['is_registered'] = rsvp is not None and rsvp.status == 'REGISTERED'
+
+    data = evt.to_dict()
+    data['is_registered'] = rsvp is not None and rsvp.status in ['REGISTERED', 'ATTENDED']
+    data['rsvp_status'] = rsvp.status if rsvp else None
+    data['checkin_token'] = rsvp.checkin_token if rsvp else None
+    data['attended'] = rsvp.status == 'ATTENDED' if rsvp else False
+
+    # Calculate average feedback rating
+    avg_rating = db.session.query(func.avg(EventFeedback.rating)).filter_by(event_id=evt.id).scalar()
+    feedbacks_count = EventFeedback.query.filter_by(event_id=evt.id).count()
+    data['avg_rating'] = round(float(avg_rating), 1) if avg_rating else None
+    data['feedbacks_count'] = feedbacks_count
 
     return api_success(data={'event': data})
 
 
 @events_bp.route('', methods=['POST'])
-@roles_required('ALUMNI', 'ADMIN')
+@jwt_required
+@roles_required(['ALUMNI', 'ADMIN'])
 def create_event():
-    """Create a new webinar, workshop, reunion, or networking session."""
+    """Create a new campus or alumni event."""
     data = request.get_json() or {}
-
     title = data.get('title', '').strip()
     description = data.get('description', '').strip()
     event_type = data.get('event_type', 'WEBINAR')
@@ -139,7 +146,7 @@ def create_event():
 @events_bp.route('/<int:event_id>/rsvp', methods=['POST'])
 @jwt_required
 def toggle_rsvp(event_id):
-    """Register or cancel RSVP attendance for an event."""
+    """Register or cancel RSVP attendance with digital check-in token."""
     evt = Event.query.get(event_id)
     if not evt or evt.is_cancelled:
         return api_error("Event is not available for RSVP.", 400)
@@ -149,38 +156,134 @@ def toggle_rsvp(event_id):
 
     try:
         if existing_rsvp:
-            if existing_rsvp.status == 'REGISTERED':
+            if existing_rsvp.status in ['REGISTERED', 'ATTENDED']:
                 existing_rsvp.status = 'CANCELLED'
                 db.session.commit()
                 return api_success(data={'is_registered': False}, message="RSVP registration cancelled.")
             else:
-                # Re-register
                 if len(evt.rsvps) >= evt.capacity:
                     return api_error("This event has reached full capacity.", 400)
                 existing_rsvp.status = 'REGISTERED'
+                if not existing_rsvp.checkin_token:
+                    existing_rsvp.checkin_token = uuid.uuid4().hex[:12].upper()
                 db.session.commit()
-                return api_success(data={'is_registered': True}, message="Successfully registered for the event!")
+                return api_success(
+                    data={'is_registered': True, 'checkin_token': existing_rsvp.checkin_token},
+                    message="Successfully registered for the event!"
+                )
         else:
             if len(evt.rsvps) >= evt.capacity:
                 return api_error("This event has reached full capacity.", 400)
 
-            rsvp = EventRSVP(event_id=evt.id, user_id=user_id, status='REGISTERED')
+            token = uuid.uuid4().hex[:12].upper()
+            rsvp = EventRSVP(
+                event_id=evt.id,
+                user_id=user_id,
+                status='REGISTERED',
+                checkin_token=token
+            )
             db.session.add(rsvp)
             db.session.commit()
-            return api_success(data={'is_registered': True}, message="Successfully registered for the event!", status_code=201)
+            return api_success(
+                data={'is_registered': True, 'checkin_token': token},
+                message="Successfully registered for the event!",
+                status_code=201
+            )
 
     except Exception as e:
         db.session.rollback()
         return api_error(f"RSVP failed: {str(e)}", 500)
 
 
-@events_bp.route('/<int:event_id>/attendees', methods=['GET'])
+@events_bp.route('/<int:event_id>/checkin', methods=['POST'])
 @jwt_required
-def get_attendees(event_id):
-    """List registered attendees for an event."""
+def checkin_attendee(event_id):
+    """Verify attendee digital QR token or mark check-in by organizer."""
     evt = Event.query.get(event_id)
     if not evt:
         return api_error("Event not found.", 404)
 
-    attendees = EventRSVP.query.filter_by(event_id=evt.id, status='REGISTERED').all()
+    data = request.get_json() or {}
+    token = data.get('checkin_token', '').strip().upper()
+    attendee_id = data.get('attendee_id')
+
+    q = EventRSVP.query.filter_by(event_id=evt.id)
+    if token:
+        rsvp = q.filter_by(checkin_token=token).first()
+    elif attendee_id:
+        rsvp = q.filter_by(user_id=attendee_id).first()
+    else:
+        # Default to current user's RSVP if checking in themselves at venue
+        rsvp = q.filter_by(user_id=request.user_id).first()
+
+    if not rsvp:
+        return api_error("Valid RSVP pass not found for this event.", 404)
+
+    if rsvp.status == 'ATTENDED':
+        return api_success(data={'rsvp': rsvp.to_dict()}, message="Attendee has already been checked in.")
+
+    rsvp.status = 'ATTENDED'
+    rsvp.checked_in_at = datetime.datetime.now(datetime.timezone.utc)
+    db.session.commit()
+
+    return api_success(data={'rsvp': rsvp.to_dict()}, message=f"Check-in successful for {rsvp.to_dict()['user_name']}!")
+
+
+@events_bp.route('/<int:event_id>/feedback', methods=['POST'])
+@jwt_required
+def submit_event_feedback(event_id):
+    """Submit post-event 1-5 star rating and review."""
+    evt = Event.query.get(event_id)
+    if not evt:
+        return api_error("Event not found.", 404)
+
+    data = request.get_json() or {}
+    rating = data.get('rating')
+    feedback_text = data.get('feedback_text', '').strip()
+
+    if not rating or not (1 <= int(rating) <= 5):
+        return api_error("Rating must be an integer between 1 and 5.", 400)
+
+    user_id = request.user_id
+    existing = EventFeedback.query.filter_by(event_id=evt.id, user_id=user_id).first()
+    if existing:
+        existing.rating = int(rating)
+        existing.feedback_text = feedback_text
+    else:
+        fb = EventFeedback(event_id=evt.id, user_id=user_id, rating=int(rating), feedback_text=feedback_text)
+        db.session.add(fb)
+
+    db.session.commit()
+    return api_success(message="Feedback submitted successfully!")
+
+
+@events_bp.route('/<int:event_id>/feedback', methods=['GET'])
+@jwt_required
+def get_event_feedbacks(event_id):
+    """List feedbacks and aggregated rating for an event."""
+    evt = Event.query.get(event_id)
+    if not evt:
+        return api_error("Event not found.", 404)
+
+    feedbacks = EventFeedback.query.filter_by(event_id=evt.id).order_by(EventFeedback.created_at.desc()).all()
+    avg_rating = db.session.query(func.avg(EventFeedback.rating)).filter_by(event_id=evt.id).scalar()
+
+    return api_success(data={
+        'feedbacks': [f.to_dict() for f in feedbacks],
+        'average_rating': round(float(avg_rating), 1) if avg_rating else None,
+        'total_feedbacks': len(feedbacks),
+    })
+
+
+@events_bp.route('/<int:event_id>/attendees', methods=['GET'])
+@jwt_required
+def get_attendees(event_id):
+    """List registered attendees for an event with attendance status."""
+    evt = Event.query.get(event_id)
+    if not evt:
+        return api_error("Event not found.", 404)
+
+    attendees = EventRSVP.query.filter_by(event_id=evt.id).filter(
+        EventRSVP.status.in_(['REGISTERED', 'ATTENDED'])
+    ).all()
     return api_success(data={'attendees': [a.to_dict() for a in attendees]})

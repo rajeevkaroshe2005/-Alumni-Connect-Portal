@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Bookmark,
   ExternalLink,
+  BellRing,
+  Zap,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
@@ -22,17 +24,19 @@ export const StudentDashboard = () => {
   const [recommendedJobs, setRecommendedJobs] = useState([])
   const [upcomingEvents, setUpcomingEvents] = useState([])
   const [myBookings, setMyBookings] = useState([])
+  const [opportunityAlerts, setOpportunityAlerts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true)
       try {
-        const [mentorsRes, jobsRes, eventsRes, bookingsRes] = await Promise.allSettled([
+        const [mentorsRes, jobsRes, eventsRes, bookingsRes, alertsRes] = await Promise.allSettled([
           api.get('/ai/recommended-mentors?limit=3'),
           api.get('/ai/recommended-jobs?limit=3'),
           api.get('/events?per_page=3'),
           api.get('/mentorship/my-bookings'),
+          api.get('/ai/opportunity-alerts'),
         ])
 
         if (mentorsRes.status === 'fulfilled' && mentorsRes.value.success) {
@@ -46,6 +50,9 @@ export const StudentDashboard = () => {
         }
         if (bookingsRes.status === 'fulfilled' && bookingsRes.value.success) {
           setMyBookings(bookingsRes.value.data.bookings || [])
+        }
+        if (alertsRes.status === 'fulfilled' && alertsRes.value?.success) {
+          setOpportunityAlerts(alertsRes.value.data?.alerts || [])
         }
       } catch (err) {
         console.error('Error fetching dashboard items:', err)
@@ -106,6 +113,71 @@ export const StudentDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* High-Match Opportunity Alerts */}
+      {opportunityAlerts.length > 0 && (
+        <div className="bg-white rounded-3xl p-6 border border-[#D8D2C4] shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-[#D8D2C4]/60">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-[#244B3A]/10 text-[#244B3A] flex items-center justify-center">
+                <BellRing className="w-4 h-4 text-[#244B3A] animate-bounce" />
+              </div>
+              <div>
+                <h2 className="text-base font-extrabold text-[#333333]">
+                  High-Match Opportunity Alerts
+                </h2>
+                <p className="text-xs text-slate-500">
+                  New job openings and alumni mentors exceeding 65% match with your profile
+                </p>
+              </div>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#C4A878]/30 text-[#244B3A] border border-[#C4A878]">
+              {opportunityAlerts.length} Opportunities
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {opportunityAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="p-4 rounded-2xl bg-[#F5F1E8]/60 border border-[#D8D2C4] hover:border-[#244B3A]/40 transition flex flex-col justify-between space-y-3"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                        alert.type === 'JOB'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {alert.type === 'JOB' ? 'Job Alert' : 'Mentor Match'}
+                    </span>
+                    <span className="text-xs font-black text-[#244B3A]">
+                      {alert.match_score}% Match
+                    </span>
+                  </div>
+
+                  <h3 className="font-extrabold text-xs text-[#333333] leading-snug">
+                    {alert.title}
+                  </h3>
+
+                  <p className="text-[11px] text-[#333333]/70 leading-relaxed">
+                    {alert.match_reason}
+                  </p>
+                </div>
+
+                <Link
+                  to={alert.action_url || (alert.type === 'JOB' ? '/jobs' : '/mentorship')}
+                  className="w-full py-2 bg-[#244B3A] hover:bg-[#3A5F50] text-white rounded-xl text-[11px] font-bold text-center block transition shadow-xs"
+                >
+                  {alert.type === 'JOB' ? 'View Job & Apply' : 'Book Session'}
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Left Column Recommendations, Right Column Sessions & Events */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

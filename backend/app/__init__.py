@@ -62,6 +62,10 @@ def create_app(config_name=None):
     from .blueprints.notifications import notifications_bp
     from .blueprints.admin import admin_bp
     from .blueprints.ai import ai_bp
+    from .blueprints.skills import skills_bp
+    from .blueprints.projects import projects_bp
+    from .blueprints.achievements import achievements_bp
+    from .blueprints.donations import donations_bp
 
     for prefix in ['/api', '/api/v1']:
         app.register_blueprint(auth_bp, url_prefix=f'{prefix}/auth', name=f'auth{prefix.replace("/", "_")}')
@@ -74,6 +78,10 @@ def create_app(config_name=None):
         app.register_blueprint(notifications_bp, url_prefix=f'{prefix}/notifications', name=f'notifications{prefix.replace("/", "_")}')
         app.register_blueprint(admin_bp, url_prefix=f'{prefix}/admin', name=f'admin{prefix.replace("/", "_")}')
         app.register_blueprint(ai_bp, url_prefix=f'{prefix}/ai', name=f'ai{prefix.replace("/", "_")}')
+        app.register_blueprint(skills_bp, url_prefix=f'{prefix}/skills', name=f'skills{prefix.replace("/", "_")}')
+        app.register_blueprint(projects_bp, url_prefix=f'{prefix}/projects', name=f'projects{prefix.replace("/", "_")}')
+        app.register_blueprint(achievements_bp, url_prefix=f'{prefix}/achievements', name=f'achievements{prefix.replace("/", "_")}')
+        app.register_blueprint(donations_bp, url_prefix=f'{prefix}/donations', name=f'donations{prefix.replace("/", "_")}')
 
     # Register socket event handlers
     from .blueprints.chat import register_socket_events

@@ -20,6 +20,7 @@ export const Navbar = () => {
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
+  const [communityDropdownOpen, setCommunityDropdownOpen] = useState(false)
   const [unreadNotifs, setUnreadNotifs] = useState(0)
 
   useEffect(() => {
@@ -114,6 +115,46 @@ export const Navbar = () => {
                 Events
               </Link>
 
+              {/* Community & Venture Hub Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCommunityDropdownOpen(!communityDropdownOpen)}
+                  onBlur={() => setTimeout(() => setCommunityDropdownOpen(false), 200)}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                    location.pathname === '/collaborations' || location.pathname === '/achievements' || location.pathname === '/donations'
+                      ? 'text-[#244B3A] bg-[#244B3A]/10 font-bold border-b-2 border-[#244B3A]'
+                      : 'hover:text-[#244B3A] hover:bg-[#F5F1E8]'
+                  }`}
+                >
+                  <span>Community</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#244B3A]" />
+                </button>
+
+                {communityDropdownOpen && (
+                  <div className="absolute left-0 mt-1 w-56 bg-white border border-[#D8D2C4] rounded-xl shadow-lg py-2 z-50 space-y-1">
+                    <Link
+                      to="/collaborations"
+                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
+                    >
+                      🚀 Project Collaboration
+                    </Link>
+                    <Link
+                      to="/achievements"
+                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
+                    >
+                      🏆 Achievement Wall
+                    </Link>
+                    <Link
+                      to="/donations"
+                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
+                    >
+                      🌱 Alumni Giving & Campaigns
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               {/* AI Hub Suite Dropdown */}
               <div className="relative">
                 <button
@@ -121,7 +162,7 @@ export const Navbar = () => {
                   onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
                   onBlur={() => setTimeout(() => setAiDropdownOpen(false), 200)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors font-semibold border ${
-                    location.pathname.startsWith('/ai') || location.pathname === '/resume-scanner' || location.pathname === '/career-predictor' || location.pathname === '/mock-interview' || location.pathname === '/analytics-hub'
+                    location.pathname.startsWith('/ai') || location.pathname === '/resume-scanner' || location.pathname === '/career-predictor' || location.pathname === '/mock-interview' || location.pathname === '/analytics-hub' || location.pathname === '/network-graph'
                       ? 'text-[#244B3A] bg-[#C4A878]/30 border-[#C4A878]'
                       : 'text-[#244B3A] bg-[#C4A878]/20 hover:bg-[#C4A878]/30 border-[#C4A878]'
                   }`}
@@ -133,6 +174,12 @@ export const Navbar = () => {
 
                 {aiDropdownOpen && (
                   <div className="absolute left-0 mt-1 w-56 bg-white border border-[#D8D2C4] rounded-xl shadow-lg py-2 z-50 space-y-1">
+                    <Link
+                      to="/network-graph"
+                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
+                    >
+                      🕸️ Smart Connection Graph
+                    </Link>
                     <Link
                       to="/ai"
                       className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
@@ -323,8 +370,39 @@ export const Navbar = () => {
                 Campus Events
               </Link>
               <div className="pt-2 pb-1 border-t border-[#D8D2C4]/60">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#244B3A] px-3">Community & Ventures</span>
+              </div>
+              <Link
+                to="/collaborations"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-medium text-[#333333] hover:bg-[#F5F1E8] rounded-lg"
+              >
+                🚀 Project Collaborations
+              </Link>
+              <Link
+                to="/achievements"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-medium text-[#333333] hover:bg-[#F5F1E8] rounded-lg"
+              >
+                🏆 Alumni Achievement Wall
+              </Link>
+              <Link
+                to="/donations"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-medium text-[#333333] hover:bg-[#F5F1E8] rounded-lg"
+              >
+                🌱 Alumni Giving & Campaigns
+              </Link>
+              <div className="pt-2 pb-1 border-t border-[#D8D2C4]/60">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#244B3A] px-3">AI Intelligence Suite</span>
               </div>
+              <Link
+                to="/network-graph"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-semibold text-[#244B3A] bg-[#244B3A]/10 rounded-lg"
+              >
+                🕸️ Smart Connection Graph
+              </Link>
               <Link
                 to="/resume-scanner"
                 onClick={() => setMobileMenuOpen(false)}

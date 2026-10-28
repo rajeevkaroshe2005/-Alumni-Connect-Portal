@@ -288,3 +288,172 @@ def generate_outreach_endpoint():
     )
 
     return api_success(data={'outreach': outreach})
+
+
+# ==========================================
+# INNOVATIVE FEATURE: SMART OPPORTUNITY ALERTS
+# ==========================================
+@ai_bp.route('/opportunity-alerts', methods=['GET'])
+@jwt_required
+def get_opportunity_alerts():
+    """
+    Generate proactive opportunity alerts for student when high-match
+    jobs or alumni mentors (> 70% match) are detected by the TF-IDF engine.
+    """
+    user = User.query.get(request.user_id)
+    if not user:
+        return api_error("User not found.", 404)
+
+    alerts = []
+    if user.role == 'STUDENT':
+        # 1. High match jobs
+        try:
+            recommended_jobs = AIService.recommend_jobs_for_student(user, limit=4)
+            for j in recommended_jobs:
+                if j.get('match_percentage', 0) >= 65:
+                    alerts.append({
+                        'id': f"job_{j['job_id']}",
+                        'type': 'JOB_OPPORTUNITY',
+                        'title': f"High-Match Role: {j['title']}",
+                        'company': j['company'],
+                        'match_percentage': j['match_percentage'],
+                        'reason': j['reasons'][0] if j.get('reasons') else "Skills align with your academic profile",
+                        'action_url': f"/jobs/{j['job_id']}",
+                        'action_label': 'View Role & Apply',
+                    })
+        except Exception:
+            pass
+
+        # 2. High match mentors
+        try:
+            recommended_mentors = AIService.recommend_mentors_for_student(user, limit=3)
+            for m in recommended_mentors:
+                if m.get('match_percentage', 0) >= 65:
+                    alerts.append({
+                        'id': f"mentor_{m['mentor_id']}",
+                        'type': 'MENTOR_RECOMMENDATION',
+                        'title': f"Recommended Alumnus: {m['name']}",
+                        'company': m.get('company', 'Alumni Mentor'),
+                        'match_percentage': m['match_percentage'],
+                        'reason': m['reasons'][0] if m.get('reasons') else "Shared domain and career path",
+                        'action_url': f"/mentorship",
+                        'action_label': 'Book 1-on-1 Session',
+                    })
+        except Exception:
+            pass
+
+    return api_success(data={
+        'alerts': alerts,
+        'count': len(alerts),
+    })
+
+
+# ==========================================
+# INNOVATIVE FEATURE: SMART CONNECTION GRAPH
+# ==========================================
+@ai_bp.route('/network-graph', methods=['GET'])
+@jwt_required
+def get_network_graph():
+    """
+    Construct professional relationship node-link graph:
+    - Center User node
+    - Company hubs (Google, Stripe, Amazon, etc.)
+    - 1st-degree connections (booked mentors or same department)
+    - 2nd-degree connections (alumni at same company reachable via peers)
+    """
+    user = User.query.get(request.user_id)
+    if not user:
+        return api_error("User not found.", 404)
+
+    user_profile = user.profile
+    user_name = f"{user_profile.first_name} {user_profile.last_name}" if user_profile else "You"
+    user_dept = user.student_detail.department if user.student_detail else ""
+
+    # Fetch all alumni
+    alumni_users = User.query.filter_by(role='ALUMNI', is_active=True).limit(25).all()
+
+    nodes = [
+        {
+            'id': f"user_{user.id}",
+            'label': user_name,
+            'type': 'CURRENT_USER',
+            'department': user_dept,
+            'color': '#244B3A',
+            'size': 24,
+        }
+    ]
+
+    edges = []
+    companies_seen = set()
+
+    for alm in alumni_users:
+        alm_prof = alm.profile
+        alm_det = alm.alumni_detail
+        if not alm_prof or not alm_det:
+            continue
+
+        alm_name = f"{alm_prof.first_name} {alm_prof.last_name}"
+        company = alm_det.current_company or "Tech Hub"
+
+        # Add Company Hub node if not added
+        company_node_id = f"comp_{company.lower().replace(' ', '_')}"
+        if company not in companies_seen:
+            companies_seen.add(company)
+            nodes.append({
+                'id': company_node_id,
+                'label': company,
+                'type': 'COMPANY',
+                'color': '#C4A878',
+                'size': 18,
+            })
+
+        # Determine Degree: 1st degree if same dept or booked, else 2nd degree
+        is_first_degree = (user_dept and alm_det.department and user_dept.lower() == alm_det.department.lower())
+        degree_str = "1st Degree (Same Dept)" if is_first_degree else "2nd Degree (Alumni Peer)"
+
+        alumnus_node_id = f"alumni_{alm.id}"
+        nodes.append({
+            'id': alumnus_node_id,
+            'label': alm_name,
+            'type': 'ALUMNI',
+            'company': company,
+            'title': alm_det.current_position or "Engineer",
+            'batch': alm_det.graduation_year,
+            'department': alm_det.department,
+            'degree': degree_str,
+            'color': '#3A5F50' if is_first_degree else '#8B6B3E',
+            'size': 14,
+            'user_id': alm.id,
+        })
+
+        # Edge from Alumnus to Company
+        edges.append({
+            'source': alumnus_node_id,
+            'target': company_node_id,
+            'label': 'Works At',
+            'type': 'EMPLOYMENT',
+        })
+
+        # Edge from User to 1st degree Alumnus
+        if is_first_degree:
+            edges.append({
+                'source': f"user_{user.id}",
+                'target': alumnus_node_id,
+                'label': f"Alumni {alm_det.department}",
+                'type': 'FIRST_DEGREE',
+            })
+        else:
+            # 2nd degree edge via company
+            edges.append({
+                'source': f"user_{user.id}",
+                'target': company_node_id,
+                'label': 'Target Company',
+                'type': 'INTEREST',
+            })
+
+    return api_success(data={
+        'nodes': nodes,
+        'edges': edges,
+        'total_nodes': len(nodes),
+        'total_edges': len(edges),
+    })

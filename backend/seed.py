@@ -376,6 +376,119 @@ def seed_all():
     )
     db.session.add_all([evt1, evt2, evt3])
 
+    # 7. Skill Endorsements (Safeguarded sample records)
+    from app.models import (
+        SkillEndorsement, CollaborationProject, AlumniAchievement,
+        DonationCampaign, DonationTransaction
+    )
+    se1 = SkillEndorsement(
+        student_id=s1.id,
+        endorser_id=a1.id,
+        skill_name="Python",
+        relationship_context="Mentorship Session (System Design Prep)"
+    )
+    se2 = SkillEndorsement(
+        student_id=s1.id,
+        endorser_id=a1.id,
+        skill_name="Kubernetes",
+        relationship_context="Mentorship Session"
+    )
+    se3 = SkillEndorsement(
+        student_id=s1.id,
+        endorser_id=a2.id,
+        skill_name="SQL",
+        relationship_context="Department Alumni (Computer Science)"
+    )
+    db.session.add_all([se1, se2, se3])
+
+    # 8. Collaboration Projects
+    proj1 = CollaborationProject(
+        creator_id=s1.id,
+        title="CampusAI: Intelligent Student-Paper RAG Assistant",
+        description="Developing a retrieval-augmented generation search tool indexing university research papers with vector embeddings.",
+        domain="AI_ML",
+        team_size_limit=4,
+        github_url="https://github.com/alumni-portal/campus-rag",
+        demo_url="https://campus-rag.demo.edu",
+    )
+    proj1.set_roles_needed(["Frontend React Dev", "Vector DB Specialist", "Alumni Advisor"])
+    proj1.set_skills_needed(["Python", "React", "PyTorch", "FastAPI"])
+
+    proj2 = CollaborationProject(
+        creator_id=a2.id,
+        title="MicroGrid: IoT Smart Campus Energy Optimizer",
+        description="An open-source campus initiative to monitor electrical consumption across dormitories using MQTT and TimescaleDB.",
+        domain="IOT_HARDWARE",
+        team_size_limit=5,
+        github_url="https://github.com/alumni-portal/microgrid-iot",
+    )
+    proj2.set_roles_needed(["Embedded Systems Lead", "Backend API Dev", "Student Contributor"])
+    proj2.set_skills_needed(["C++", "Python", "MQTT", "Docker"])
+    db.session.add_all([proj1, proj2])
+
+    # 9. Alumni Achievements Wall
+    ach1 = AlumniAchievement(
+        alumnus_id=a1.id,
+        title="Promoted to Senior Software Engineer at Google Cloud",
+        category="PROMOTION",
+        company="Google",
+        description="Promoted to L5 Senior Engineer leading real-time telemetry streaming pipelines across Google Cloud Spanner infrastructure.",
+        proof_url="https://linkedin.com/in/priya-sharma-demo",
+        cheers_count=24,
+        is_approved=True,
+    )
+    ach2 = AlumniAchievement(
+        alumnus_id=a2.id,
+        title="Architected 99.999% High-Throughput Payment Engine at Stripe",
+        category="PATENT",
+        company="Stripe",
+        description="Co-patented a distributed zero-downtime consensus algorithm handling $40M daily settlement transactions.",
+        proof_url="https://stripe.com/engineering",
+        cheers_count=38,
+        is_approved=True,
+    )
+    ach3 = AlumniAchievement(
+        alumnus_id=a3.id,
+        title="Published Research Paper on LLM Efficiency at NeurIPS 2025",
+        category="PUBLICATION",
+        company="Amazon AWS AI",
+        description="Our paper on low-rank adaptation and token pruning for enterprise transformers was accepted at NeurIPS Main Track.",
+        proof_url="https://arxiv.org/abs/2501.00000",
+        cheers_count=45,
+        is_approved=True,
+    )
+    db.session.add_all([ach1, ach2, ach3])
+
+    # 10. University Donation Campaigns
+    camp1 = DonationCampaign(
+        title="Next-Generation AI & Robotics Compute Lab",
+        description="Establishing an on-campus cluster equipped with high-throughput NVIDIA GPUs for undergraduate AI research and capstone projects.",
+        category="LAB_EQUIPMENT",
+        target_amount=2500000.00,
+        raised_amount=1680000.00,
+        image_url="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&auto=format&fit=crop&q=60",
+        is_active=True,
+    )
+    camp2 = DonationCampaign(
+        title="Merit-cum-Means Underprivileged Student Scholarships",
+        description="Providing full tuition fee waivers and laptop stipends to 25 meritorious first-generation engineering students annually.",
+        category="SCHOLARSHIP",
+        target_amount=1500000.00,
+        raised_amount=1150000.00,
+        image_url="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&auto=format&fit=crop&q=60",
+        is_active=True,
+    )
+    camp3 = DonationCampaign(
+        title="National Hackathon & Student Innovation Travel Grant",
+        description="Funding travel, registration, and prototype components for students selected for Smart India Hackathon and ACM ICPC World Finals.",
+        category="HACKATHON",
+        target_amount=500000.00,
+        raised_amount=390000.00,
+        image_url="https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&auto=format&fit=crop&q=60",
+        is_active=True,
+    )
+    db.session.add_all([camp1, camp2, camp3])
+
     db.session.commit()
     print("Seed records successfully committed to database!")
 

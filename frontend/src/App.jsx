@@ -48,6 +48,12 @@ import GlobalAlumniAnalyticsPage from './pages/ai/GlobalAlumniAnalyticsPage'
 import { AIResumeScannerPage } from './pages/ai/AIResumeScannerPage'
 import { CareerPredictorPage } from './pages/ai/CareerPredictorPage'
 
+// Enterprise Community & Collaboration Features
+import NetworkGraphPage from './pages/network/NetworkGraphPage'
+import ProjectCollaborationPage from './pages/projects/ProjectCollaborationPage'
+import AlumniAchievementPage from './pages/achievements/AlumniAchievementPage'
+import DonationCampaignsPage from './pages/donations/DonationCampaignsPage'
+
 // User Profile & Settings
 import ProfilePage from './pages/profile/ProfilePage'
 
@@ -276,6 +282,40 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <GlobalAlumniAnalyticsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Enterprise Features: Network Graph, Collaborations, Achievements, Giving */}
+                <Route
+                  path="/network-graph"
+                  element={
+                    <ProtectedRoute>
+                      <NetworkGraphPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/collaborations"
+                  element={
+                    <ProtectedRoute>
+                      <ProjectCollaborationPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/achievements"
+                  element={
+                    <ProtectedRoute>
+                      <AlumniAchievementPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/donations"
+                  element={
+                    <ProtectedRoute>
+                      <DonationCampaignsPage />
                     </ProtectedRoute>
                   }
                 />

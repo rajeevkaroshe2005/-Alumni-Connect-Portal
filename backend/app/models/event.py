@@ -65,6 +65,8 @@ class EventRSVP(db.Model):
     event_id = db.Column(db.Integer, db.ForeignKey('events.id', ondelete='CASCADE'), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
     status = db.Column(db.String(25), default='REGISTERED', nullable=False)  # REGISTERED, ATTENDED, CANCELLED
+    checkin_token = db.Column(db.String(64), nullable=True, index=True)
+    checked_in_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc), nullable=False)
 
     user = db.relationship('User', backref='event_rsvps')
@@ -78,5 +80,7 @@ class EventRSVP(db.Model):
             'user_name': f"{u_profile.first_name} {u_profile.last_name}" if u_profile else "Attendee",
             'user_email': self.user.email if self.user else None,
             'status': self.status,
+            'checkin_token': self.checkin_token,
+            'checked_in_at': self.checked_in_at.isoformat() if self.checked_in_at else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
         }

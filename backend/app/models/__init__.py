@@ -10,6 +10,12 @@ from .event import Event, EventRSVP
 from .message import Message
 from .notification import Notification
 from .audit_log import AuditLog
+from .skill_endorsement import SkillEndorsement
+from .mentorship_summary import MentorshipSessionSummary
+from .collaboration_project import CollaborationProject, ProjectApplication
+from .alumni_achievement import AlumniAchievement, AchievementCheer
+from .donation import DonationCampaign, DonationTransaction
+from .event_feedback import EventFeedback
 
 __all__ = [
     'User',
@@ -27,4 +33,13 @@ __all__ = [
     'Message',
     'Notification',
     'AuditLog',
+    'SkillEndorsement',
+    'MentorshipSessionSummary',
+    'CollaborationProject',
+    'ProjectApplication',
+    'AlumniAchievement',
+    'AchievementCheer',
+    'DonationCampaign',
+    'DonationTransaction',
+    'EventFeedback',
 ]

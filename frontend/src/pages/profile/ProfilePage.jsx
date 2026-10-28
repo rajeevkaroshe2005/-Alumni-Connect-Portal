@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import SkillEndorsementWidget from '../../components/skills/SkillEndorsementWidget';
 
 export default function ProfilePage() {
   const { user, login } = useAuth();
@@ -361,6 +362,14 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
+
+        {/* Verified Skill Endorsements Section */}
+        {user?.id && (
+          <SkillEndorsementWidget
+            studentId={user.id}
+            studentSkills={baseProfile.skills}
+          />
+        )}
 
         {/* Role-Specific Card: Student */}
         {user?.role === 'STUDENT' && (

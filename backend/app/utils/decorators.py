@@ -33,14 +33,19 @@ def jwt_required(f):
 
 def roles_required(*allowed_roles):
     """Decorator to enforce role-based access control (RBAC)."""
+    if len(allowed_roles) == 1 and isinstance(allowed_roles[0], (list, tuple, set)):
+        roles = set(allowed_roles[0])
+    else:
+        roles = set(allowed_roles)
+
     def decorator(f):
         @wraps(f)
         @jwt_required
         def decorated_function(*args, **kwargs):
             current_role = getattr(request, 'user_role', None)
-            if not current_role or current_role not in allowed_roles:
+            if not current_role or current_role not in roles:
                 return api_error(
-                    f"Access forbidden: requires one of roles [{', '.join(allowed_roles)}]",
+                    f"Access forbidden: requires one of roles [{', '.join(sorted(roles))}]",
                     403
                 )
             return f(*args, **kwargs)

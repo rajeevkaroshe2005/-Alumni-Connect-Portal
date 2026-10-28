@@ -368,3 +368,106 @@ def get_my_bookings():
         bookings = MentorshipBooking.query.order_by(MentorshipBooking.session_date.desc()).all()
 
     return api_success(data={'bookings': [b.to_dict() for b in bookings]})
+
+
+@mentorship_bp.route('/bookings/<int:booking_id>/summary', methods=['POST'])
+@jwt_required
+def save_session_summary(booking_id):
+    """
+    Save consensual session notes and extract structured action items and follow-up milestones.
+    Accessible to either participant (mentor or mentee).
+    """
+    from ..models.mentorship_summary import MentorshipSessionSummary
+
+    booking = MentorshipBooking.query.get(booking_id)
+    if not booking:
+        return api_error("Booking not found.", 404)
+
+    user_id = request.user_id
+    if user_id not in [booking.mentor_id, booking.student_id] and request.user_role != 'ADMIN':
+        return api_error("You must be an active participant in this session to record summaries.", 403)
+
+    data = request.get_json() or {}
+    session_notes = data.get('session_notes', '').strip()
+    key_takeaways = data.get('key_takeaways', '').strip()
+    action_items = data.get('action_items', [])
+    recommended_resources = data.get('recommended_resources', [])
+    follow_up_date_str = data.get('follow_up_date')
+
+    if not session_notes:
+        return api_error("Session notes are required.", 400)
+
+    # Automated action-item extractor if not provided
+    if not action_items:
+        # Generate 3 targeted action items based on notes
+        lines = [line.strip().lstrip('•-*1234567890. ') for line in session_notes.split('\n') if line.strip()]
+        if len(lines) >= 2:
+            action_items = [f"Complete: {lines[0]}", f"Deepen practice in: {lines[1]}", "Push progress updates to GitHub / portfolio for next check-in"]
+        else:
+            action_items = [
+                "Review recommended system design patterns and practice on LeetCode/HackerRank.",
+                "Revise resume project bullet points using STAR action-result verbs.",
+                "Schedule a follow-up 30-day sync to review completed project milestone."
+            ]
+
+    if not recommended_resources:
+        recommended_resources = [
+            "Designing Data-Intensive Applications (Kleppmann)",
+            "System Design Primer (GitHub / Donne Martin)",
+            "FAANG Behavioral STAR Interview Preparation Guide"
+        ]
+
+    follow_up_date = None
+    if follow_up_date_str:
+        try:
+            follow_up_date = datetime.date.fromisoformat(follow_up_date_str)
+        except Exception:
+            pass
+
+    summary = MentorshipSessionSummary.query.filter_by(booking_id=booking.id).first()
+    if summary:
+        summary.session_notes = session_notes
+        summary.key_takeaways = key_takeaways
+        summary.set_action_items(action_items)
+        summary.set_resources(recommended_resources)
+        if follow_up_date:
+            summary.follow_up_date = follow_up_date
+    else:
+        summary = MentorshipSessionSummary(
+            booking_id=booking.id,
+            author_id=user_id,
+            session_notes=session_notes,
+            key_takeaways=key_takeaways,
+            follow_up_date=follow_up_date
+        )
+        summary.set_action_items(action_items)
+        summary.set_resources(recommended_resources)
+        db.session.add(summary)
+
+    # Mark booking completed if still confirmed
+    if booking.status == 'CONFIRMED':
+        booking.status = 'COMPLETED'
+
+    db.session.commit()
+
+    return api_success(
+        data={'summary': summary.to_dict()},
+        message="Mentorship session summary and action items recorded successfully!"
+    )
+
+
+@mentorship_bp.route('/bookings/<int:booking_id>/summary', methods=['GET'])
+@jwt_required
+def get_session_summary(booking_id):
+    """Retrieve session summary, action items, and follow-up timeline."""
+    from ..models.mentorship_summary import MentorshipSessionSummary
+
+    booking = MentorshipBooking.query.get(booking_id)
+    if not booking:
+        return api_error("Booking not found.", 404)
+
+    summary = MentorshipSessionSummary.query.filter_by(booking_id=booking.id).first()
+    if not summary:
+        return api_success(data={'summary': None})
+
+    return api_success(data={'summary': summary.to_dict()})
