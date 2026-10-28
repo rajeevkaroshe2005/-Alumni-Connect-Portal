@@ -42,6 +42,9 @@ import NotificationsPage from './pages/notifications/NotificationsPage'
 
 // AI Career Assistant & Recommendations
 import AICareerAssistantPage from './pages/ai/AICareerAssistantPage'
+import AIMockInterviewPage from './pages/ai/AIMockInterviewPage'
+import AIReferralGeneratorPage from './pages/ai/AIReferralGeneratorPage'
+import GlobalAlumniAnalyticsPage from './pages/ai/GlobalAlumniAnalyticsPage'
 
 // User Profile & Settings
 import ProfilePage from './pages/profile/ProfilePage'
@@ -227,6 +230,30 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <AICareerAssistantPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/mock-interview"
+                  element={
+                    <ProtectedRoute>
+                      <AIMockInterviewPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ai-referral"
+                  element={
+                    <ProtectedRoute>
+                      <AIReferralGeneratorPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics-hub"
+                  element={
+                    <ProtectedRoute>
+                      <GlobalAlumniAnalyticsPage />
                     </ProtectedRoute>
                   }
                 />

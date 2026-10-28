@@ -19,7 +19,7 @@ def list_mentors():
     page = request.args.get('page', 1, type=int)
     per_page = min(request.args.get('per_page', 12, type=int), 50)
 
-    q = db.session.query(MentorProfile).join(User).filter(
+    q = db.session.query(MentorProfile).join(User, MentorProfile.user_id == User.id).filter(
         User.is_active == True,
         MentorProfile.is_available == True,
     )

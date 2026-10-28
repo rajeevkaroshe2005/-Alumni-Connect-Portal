@@ -22,8 +22,12 @@ def search_alumni():
     page = request.args.get('page', 1, type=int)
     per_page = min(request.args.get('per_page', 12, type=int), 50)
 
-    # Base query joined with Profile and AlumniDetail
-    q = db.session.query(User).join(Profile).join(AlumniDetail).filter(
+    # Base query joined with Profile and AlumniDetail with explicit onclause
+    q = db.session.query(User).join(
+        Profile, User.id == Profile.user_id
+    ).join(
+        AlumniDetail, User.id == AlumniDetail.user_id
+    ).filter(
         User.role == 'ALUMNI',
         User.is_active == True,
     )

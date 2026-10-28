@@ -116,11 +116,37 @@ export const Navbar = () => {
                 Events
               </Link>
               <Link
-                to="/ai-assistant"
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-violet-700 bg-violet-50/70 hover:bg-violet-100 font-semibold border border-violet-200/60`}
+                to="/ai"
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
+                  location.pathname === '/ai' ? 'text-violet-700 bg-violet-100 font-semibold' : 'text-violet-700 bg-violet-50/70 hover:bg-violet-100 font-semibold'
+                } border border-violet-200/60`}
               >
                 <Sparkles className="w-4 h-4 text-violet-600" />
                 AI Career
+              </Link>
+              <Link
+                to="/mock-interview"
+                className={`px-3 py-2 rounded-lg transition-colors text-xs font-bold ${
+                  location.pathname === '/mock-interview' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                AI Interview
+              </Link>
+              <Link
+                to="/ai-referral"
+                className={`px-3 py-2 rounded-lg transition-colors text-xs font-bold ${
+                  location.pathname === '/ai-referral' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                Referral Pitch
+              </Link>
+              <Link
+                to="/analytics-hub"
+                className={`px-3 py-2 rounded-lg transition-colors text-xs font-bold ${
+                  location.pathname === '/analytics-hub' ? 'text-indigo-600 bg-indigo-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                Global Matrix
               </Link>
               {role === 'ADMIN' && (
                 <Link
@@ -272,11 +298,32 @@ export const Navbar = () => {
                 Campus Events
               </Link>
               <Link
-                to="/ai-assistant"
+                to="/ai"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 text-base font-semibold text-violet-700 bg-violet-50 rounded-lg"
               >
                 AI Career Assistant
+              </Link>
+              <Link
+                to="/mock-interview"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-semibold text-indigo-700 bg-indigo-50 rounded-lg"
+              >
+                AI Mock Interview
+              </Link>
+              <Link
+                to="/ai-referral"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-semibold text-indigo-700 bg-indigo-50 rounded-lg"
+              >
+                Smart Referral Generator
+              </Link>
+              <Link
+                to="/analytics-hub"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 text-base font-semibold text-slate-700 hover:bg-slate-50 rounded-lg"
+              >
+                Global Alumni Matrix
               </Link>
               <Link
                 to="/profile"
