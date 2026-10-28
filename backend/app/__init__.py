@@ -41,6 +41,7 @@ def create_app(config_name=None):
 
     # Register Healthcheck / Base API Route
     @app.route('/api/health', methods=['GET'])
+    @app.route('/api/v1/health', methods=['GET'])
     def health_check():
         return jsonify({
             'status': 'healthy',
@@ -50,7 +51,7 @@ def create_app(config_name=None):
             'database': 'connected' if db.engine else 'unknown',
         }), 200
 
-    # Register blueprints (will be imported dynamically or once created)
+    # Register blueprints under /api and /api/v1 versioned prefixes
     from .blueprints.auth import auth_bp
     from .blueprints.profiles import profiles_bp
     from .blueprints.alumni import alumni_bp
@@ -62,16 +63,17 @@ def create_app(config_name=None):
     from .blueprints.admin import admin_bp
     from .blueprints.ai import ai_bp
 
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(profiles_bp, url_prefix='/api/profiles')
-    app.register_blueprint(alumni_bp, url_prefix='/api/alumni')
-    app.register_blueprint(jobs_bp, url_prefix='/api/jobs')
-    app.register_blueprint(mentorship_bp, url_prefix='/api/mentorship')
-    app.register_blueprint(events_bp, url_prefix='/api/events')
-    app.register_blueprint(chat_bp, url_prefix='/api/chat')
-    app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
-    app.register_blueprint(admin_bp, url_prefix='/api/admin')
-    app.register_blueprint(ai_bp, url_prefix='/api/ai')
+    for prefix in ['/api', '/api/v1']:
+        app.register_blueprint(auth_bp, url_prefix=f'{prefix}/auth', name=f'auth{prefix.replace("/", "_")}')
+        app.register_blueprint(profiles_bp, url_prefix=f'{prefix}/profiles', name=f'profiles{prefix.replace("/", "_")}')
+        app.register_blueprint(alumni_bp, url_prefix=f'{prefix}/alumni', name=f'alumni{prefix.replace("/", "_")}')
+        app.register_blueprint(jobs_bp, url_prefix=f'{prefix}/jobs', name=f'jobs{prefix.replace("/", "_")}')
+        app.register_blueprint(mentorship_bp, url_prefix=f'{prefix}/mentorship', name=f'mentorship{prefix.replace("/", "_")}')
+        app.register_blueprint(events_bp, url_prefix=f'{prefix}/events', name=f'events{prefix.replace("/", "_")}')
+        app.register_blueprint(chat_bp, url_prefix=f'{prefix}/chat', name=f'chat{prefix.replace("/", "_")}')
+        app.register_blueprint(notifications_bp, url_prefix=f'{prefix}/notifications', name=f'notifications{prefix.replace("/", "_")}')
+        app.register_blueprint(admin_bp, url_prefix=f'{prefix}/admin', name=f'admin{prefix.replace("/", "_")}')
+        app.register_blueprint(ai_bp, url_prefix=f'{prefix}/ai', name=f'ai{prefix.replace("/", "_")}')
 
     # Register socket event handlers
     from .blueprints.chat import register_socket_events
