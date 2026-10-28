@@ -45,6 +45,8 @@ import AICareerAssistantPage from './pages/ai/AICareerAssistantPage'
 import AIMockInterviewPage from './pages/ai/AIMockInterviewPage'
 import AIReferralGeneratorPage from './pages/ai/AIReferralGeneratorPage'
 import GlobalAlumniAnalyticsPage from './pages/ai/GlobalAlumniAnalyticsPage'
+import { AIResumeScannerPage } from './pages/ai/AIResumeScannerPage'
+import { CareerPredictorPage } from './pages/ai/CareerPredictorPage'
 
 // User Profile & Settings
 import ProfilePage from './pages/profile/ProfilePage'
@@ -58,16 +60,16 @@ import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage'
 function NotFoundPage() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
-      <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-2xl mb-4">
+      <div className="w-16 h-16 rounded-2xl bg-[#244B3A]/10 text-[#244B3A] border border-[#244B3A]/20 flex items-center justify-center font-black text-2xl mb-4">
         404
       </div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Page Not Found</h1>
-      <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-sm">
+      <h1 className="text-2xl font-bold text-[#333333]">Page Not Found</h1>
+      <p className="text-[#333333]/70 text-sm mt-1 max-w-sm">
         The page you are looking for does not exist or has been relocated.
       </p>
       <Link
         to="/"
-        className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl text-sm transition"
+        className="mt-6 px-5 py-2.5 bg-[#244B3A] hover:bg-[#3A5F50] text-white font-medium rounded-xl text-sm transition"
       >
         Return to Home
       </Link>
@@ -100,7 +102,7 @@ export default function App() {
                   }
                 />
 
-                {/* Alumni Discovery & Details */}
+                {/* Alumni Directory */}
                 <Route
                   path="/alumni"
                   element={
@@ -118,7 +120,7 @@ export default function App() {
                   }
                 />
 
-                {/* Jobs & Internships */}
+                {/* Jobs & Opportunities */}
                 <Route
                   path="/jobs"
                   element={
@@ -144,15 +146,15 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/applications"
+                  path="/jobs/:id/applications"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedRoles={['ALUMNI', 'ADMIN']}>
                       <JobApplicationsPage />
                     </ProtectedRoute>
                   }
                 />
 
-                {/* Mentorship */}
+                {/* Mentorship System */}
                 <Route
                   path="/mentorship"
                   element={
@@ -162,7 +164,7 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/mentorship/bookings"
+                  path="/mentorship/my-bookings"
                   element={
                     <ProtectedRoute>
                       <MyBookingsPage />
@@ -230,6 +232,22 @@ export default function App() {
                   element={
                     <ProtectedRoute>
                       <AICareerAssistantPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/resume-scanner"
+                  element={
+                    <ProtectedRoute>
+                      <AIResumeScannerPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/career-predictor"
+                  element={
+                    <ProtectedRoute>
+                      <CareerPredictorPage />
                     </ProtectedRoute>
                   }
                 />

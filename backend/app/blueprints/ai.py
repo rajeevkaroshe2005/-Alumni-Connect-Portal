@@ -21,7 +21,7 @@ def get_recommended_mentors():
     return api_success(
         data={
             'recommendations': recommendations,
-            'algorithm': 'TF-IDF + Cosine Similarity + Skill Jaccard Overlap',
+            'algorithm': 'TF-IDF (N-gram 1-2) + Domain Synonym Normalizer + Cosine Similarity',
         }
     )
 
@@ -92,7 +92,6 @@ def perform_skill_gap_analysis():
         return api_error("Target job not found.", 404)
 
     if not skills and request.user_id:
-        # Fallback to student profile skills if no custom resume skills provided
         user = User.query.get(request.user_id)
         if user and user.profile:
             skills = user.profile.get_skills_list()
@@ -163,3 +162,129 @@ def get_global_analytics_hub():
     """Retrieve global alumni hub coordinates, placement pipeline, and trending competencies."""
     analytics = AIService.get_alumni_analytics_hub_data()
     return api_success(data={'analytics': analytics})
+
+
+# ==========================================
+# INNOVATIVE ENDPOINT 4: INTERACTIVE AI ATS RESUME SCANNER
+# ==========================================
+@ai_bp.route('/resume/scan', methods=['POST'])
+@jwt_required
+def scan_resume_ats_endpoint():
+    """
+    Perform deep ATS compliance audit on uploaded resume or raw text against a target job.
+    Returns composite score (0-100), section analysis, contact audit, and metric bullet enhancements.
+    """
+    resume_text = ""
+    target_job_title = ""
+    target_job_description = ""
+    required_skills = []
+
+    # Check for file upload
+    if 'resume' in request.files:
+        file = request.files['resume']
+        if file and file.filename != '':
+            file_bytes = file.read()
+            if len(file_bytes) > 5 * 1024 * 1024:
+                return api_error("File size exceeds 5MB limit.", 400)
+            try:
+                parsed = AIService.parse_resume(file_bytes, file.filename)
+                resume_text = parsed.get('extracted_text', '')
+            except Exception as e:
+                return api_error(f"Error reading resume file: {str(e)}", 400)
+
+    # Support raw text or fallback form fields
+    if not resume_text:
+        data = request.get_json(silent=True) or {}
+        resume_text = data.get('resume_text', '').strip()
+        job_id = data.get('job_id')
+        target_job_title = data.get('target_job_title', '')
+        target_job_description = data.get('target_job_description', '')
+    else:
+        # Multipart form data may contain job_id
+        job_id = request.form.get('job_id')
+        target_job_title = request.form.get('target_job_title', '')
+        target_job_description = request.form.get('target_job_description', '')
+
+    if not resume_text:
+        return api_error("No resume content provided. Please upload a PDF/TXT resume or provide resume_text.", 400)
+
+    if job_id:
+        job = Job.query.get(job_id)
+        if job:
+            target_job_title = job.title
+            target_job_description = job.description
+            required_skills = job.get_skills_list()
+
+    audit = AIService.scan_resume_for_ats(
+        resume_text=resume_text,
+        target_job_title=target_job_title,
+        target_job_description=target_job_description,
+        required_skills=required_skills
+    )
+
+    return api_success(data={'audit': audit})
+
+
+# ==========================================
+# INNOVATIVE ENDPOINT 5: AI CAREER & COMPENSATION PREDICTOR
+# ==========================================
+@ai_bp.route('/career/predict', methods=['POST'])
+@jwt_required
+def predict_career_endpoint():
+    """Predict market salary band, progression curve, and high-ROI skills to learn next."""
+    data = request.get_json() or {}
+    department = data.get('department', 'Computer Science & Engineering')
+    years_experience = float(data.get('years_experience', 0))
+    skills = data.get('skills', [])
+    target_role = data.get('target_role', 'Software Engineer')
+    company_tier = data.get('company_tier', 'TIER_1_PRODUCT')
+
+    if not skills and request.user_id:
+        user = User.query.get(request.user_id)
+        if user and user.profile:
+            skills = user.profile.get_skills_list()
+
+    prediction = AIService.predict_career_compensation(
+        department=department,
+        years_experience=years_experience,
+        skills=skills,
+        target_role=target_role,
+        company_tier=company_tier
+    )
+
+    return api_success(data={'prediction': prediction})
+
+
+# ==========================================
+# INNOVATIVE ENDPOINT 6: SMART ALUMNI OUTREACH WITH TONE SELECTION
+# ==========================================
+@ai_bp.route('/outreach/generate', methods=['POST'])
+@jwt_required
+def generate_outreach_endpoint():
+    """Generate tailored outreach pitch across coffee-chat, referral, or technical guidance tones."""
+    data = request.get_json() or {}
+    alumnus_id = data.get('alumnus_id')
+    tone = data.get('tone', 'COFFEE_CHAT')
+    target_company = data.get('target_company')
+    target_role = data.get('target_role')
+    custom_note = data.get('custom_note')
+
+    if not alumnus_id:
+        return api_error("alumnus_id is required.", 400)
+
+    student_user = User.query.get(request.user_id)
+    alumnus_user = User.query.get(alumnus_id)
+
+    if not student_user or not alumnus_user:
+        return api_error("Student or Alumnus user not found.", 404)
+
+    outreach = AIService.generate_networking_outreach(
+        student_user=student_user,
+        alumnus_user=alumnus_user,
+        target_company=target_company,
+        target_role=target_role,
+        tone=tone,
+        custom_note=custom_note
+    )
+
+    return api_success(data={'outreach': outreach})

@@ -11,8 +11,9 @@ from ..models import User, MentorProfile, Job, Profile, StudentDetail, AlumniDet
 class AIService:
     """
     AI Recommendation & Career Intelligence Engine.
-    Implements content-based filtering via TF-IDF, Cosine Similarity,
-    skill-overlap analysis, resume extraction, and career roadmap generation.
+    Implements content-based filtering via TF-IDF (N-gram 1-2), Cosine Similarity,
+    Domain Semantic Normalizer, Resume ATS Scanner, Career Compensation Predictor,
+    Mock Interview Simulator, and Smart Referral & Outreach Generator.
     """
 
     TECH_SKILLS_TAXONOMY = {
@@ -22,7 +23,38 @@ class AIService:
         'gcp', 'git', 'github', 'ci/cd', 'linux', 'html', 'css', 'tailwind', 'bootstrap', 'graphql',
         'rest api', 'machine learning', 'deep learning', 'nlp', 'scikit-learn', 'tensorflow', 'pytorch',
         'pandas', 'numpy', 'data analysis', 'sql', 'cybersecurity', 'cloud computing', 'microservices',
-        'agile', 'scrum', 'system design', 'data structures', 'algorithms', 'devops', 'unit testing'
+        'agile', 'scrum', 'system design', 'data structures', 'algorithms', 'devops', 'unit testing',
+        'large language models', 'llm', 'rag', 'distributed systems', 'kafka', 'ci cd', 'generative ai'
+    }
+
+    # Domain Synonym Mapping for Semantic Normalization (Solves TF-IDF synonym gap)
+    DOMAIN_SYNONYMS = {
+        r'\bk8s\b': 'kubernetes',
+        r'\bkube\b': 'kubernetes',
+        r'\bgolang\b': 'go',
+        r'\bjs\b': 'javascript',
+        r'\bts\b': 'typescript',
+        r'\bpy\b': 'python',
+        r'\bpostgres\b': 'postgresql',
+        r'\bmongo\b': 'mongodb',
+        r'\breactjs\b': 'react',
+        r'\bnodejs\b': 'node',
+        r'\bvuejs\b': 'vue',
+        r'\baws lambda\b': 'serverless cloud',
+        r'\bgcp\b': 'google cloud platform',
+        r'\bml\b': 'machine learning',
+        r'\bdl\b': 'deep learning',
+        r'\bai\b': 'artificial intelligence',
+        r'\bnlp\b': 'natural language processing',
+        r'\bllm\b': 'large language models',
+        r'\bllms\b': 'large language models',
+        r'\brag\b': 'retrieval augmented generation',
+        r'\bcv\b': 'computer vision',
+        r'\bci/cd\b': 'continuous integration devops',
+        r'\bdsa\b': 'data structures algorithms',
+        r'\boop\b': 'object oriented programming',
+        r'\bgql\b': 'graphql',
+        r'\brest\b': 'rest api',
     }
 
     @staticmethod
@@ -32,14 +64,25 @@ class AIService:
             return ""
         return re.sub(r'\s+', ' ', str(text).lower().strip())
 
-    @staticmethod
-    def _extract_skills_from_text(text: str) -> List[str]:
+    @classmethod
+    def _normalize_synonyms(cls, text: str) -> str:
+        """
+        Domain Semantic Normalizer:
+        Expands acronyms and technical synonyms to bridge the vocabulary gap.
+        """
+        cleaned = cls._clean_text(text)
+        for pattern, replacement in cls.DOMAIN_SYNONYMS.items():
+            cleaned = re.sub(pattern, f"{replacement} ", cleaned)
+        return cleaned
+
+    @classmethod
+    def _extract_skills_from_text(cls, text: str) -> List[str]:
         """Extract recognized professional skills from text based on taxonomy and token matching."""
-        cleaned = AIService._clean_text(text)
+        normalized = cls._normalize_synonyms(text)
         found = set()
-        for skill in AIService.TECH_SKILLS_TAXONOMY:
+        for skill in cls.TECH_SKILLS_TAXONOMY:
             pattern = r'\b' + re.escape(skill) + r'\b'
-            if re.search(pattern, cleaned):
+            if re.search(pattern, normalized):
                 found.add(skill.title())
         return sorted(list(found))
 
@@ -47,7 +90,7 @@ class AIService:
     def recommend_mentors_for_student(cls, student_user: User, limit: int = 5) -> List[Dict[str, Any]]:
         """
         Content-based mentor recommendation matching student goals/skills
-        against mentor expertise using TF-IDF and Cosine Similarity.
+        against mentor expertise using TF-IDF N-grams (1,2) and Cosine Similarity.
         """
         student_profile = student_user.profile
         student_detail = student_user.student_detail
@@ -56,13 +99,13 @@ class AIService:
         student_interests = set(i.lower() for i in (student_detail.get_interests_list() if student_detail else []))
         student_dept = student_detail.department if student_detail else ""
 
-        combined_student_query = " ".join([
+        combined_student_query = cls._normalize_synonyms(" ".join([
             " ".join(student_skills),
             " ".join(student_interests),
             student_dept or "",
             (student_profile.headline or "") if student_profile else "",
             (student_profile.bio or "") if student_profile else "",
-        ]).strip()
+        ]))
 
         # Query available mentors
         available_mentors = MentorProfile.query.filter_by(is_available=True).all()
@@ -84,13 +127,13 @@ class AIService:
             if m_profile and m_profile.skills:
                 mentor_skills.update(s.lower() for s in m_profile.get_skills_list())
 
-            doc = " ".join([
+            doc = cls._normalize_synonyms(" ".join([
                 " ".join(mentor_skills),
                 m.bio or "",
                 m_alumni.current_company if m_alumni else "",
                 m_alumni.department if m_alumni else "",
                 m_profile.headline if m_profile else "",
-            ]).strip()
+            ]))
 
             mentor_records.append({
                 'mentor_profile': m,
@@ -103,9 +146,9 @@ class AIService:
         if not mentor_records:
             return []
 
-        # Build TF-IDF Matrix
+        # Build TF-IDF Matrix with N-grams (1, 2)
         all_docs = [combined_student_query] + mentor_docs
-        tfidf = TfidfVectorizer(stop_words='english', min_df=1)
+        tfidf = TfidfVectorizer(stop_words='english', ngram_range=(1, 2), sublinear_tf=True, min_df=1)
         try:
             tfidf_matrix = tfidf.fit_transform(all_docs)
             student_vec = tfidf_matrix[0:1]
@@ -144,7 +187,6 @@ class AIService:
 
             results.append(m_dict)
 
-        # Sort descending by recommendation score
         results.sort(key=lambda x: x['recommendation_score'], reverse=True)
         return results[:limit]
 
@@ -152,6 +194,7 @@ class AIService:
     def recommend_jobs_for_student(cls, student_user: User, limit: int = 5) -> List[Dict[str, Any]]:
         """
         Rank job opportunities for student based on student skills and background.
+        Uses N-gram TF-IDF and Domain Semantic Normalizer.
         """
         student_profile = student_user.profile
         student_detail = student_user.student_detail
@@ -159,12 +202,12 @@ class AIService:
         student_skills = set(s.lower() for s in (student_profile.get_skills_list() if student_profile else []))
         student_interests = set(i.lower() for i in (student_detail.get_interests_list() if student_detail else []))
 
-        student_query = " ".join([
+        student_query = cls._normalize_synonyms(" ".join([
             " ".join(student_skills),
             " ".join(student_interests),
             (student_profile.headline or "") if student_profile else "",
             (student_detail.department or "") if student_detail else "",
-        ]).strip()
+        ]))
 
         active_jobs = Job.query.filter_by(is_active=True, moderation_status='APPROVED').all()
         if not active_jobs:
@@ -175,12 +218,12 @@ class AIService:
 
         for job in active_jobs:
             req_skills = set(s.lower() for s in job.get_skills_list())
-            doc = " ".join([
+            doc = cls._normalize_synonyms(" ".join([
                 job.title,
                 job.company,
                 " ".join(req_skills),
                 job.description,
-            ])
+            ]))
             job_records.append({
                 'job': job,
                 'req_skills': req_skills,
@@ -189,7 +232,7 @@ class AIService:
             job_docs.append(doc)
 
         all_docs = [student_query] + job_docs
-        tfidf = TfidfVectorizer(stop_words='english', min_df=1)
+        tfidf = TfidfVectorizer(stop_words='english', ngram_range=(1, 2), sublinear_tf=True, min_df=1)
         try:
             tfidf_matrix = tfidf.fit_transform(all_docs)
             student_vec = tfidf_matrix[0:1]
@@ -255,12 +298,13 @@ class AIService:
 
         extracted_skills = cls._extract_skills_from_text(extracted_text)
 
-        # Basic experience year detector heuristics
+        # Experience detector heuristics
         exp_match = re.findall(r'(\d+)\+?\s*(?:years?|yrs?)\s*(?:of)?\s*experience', extracted_text, re.IGNORECASE)
         detected_experience_years = max([int(x) for x in exp_match]) if exp_match else None
 
         return {
             'text_length': len(extracted_text),
+            'extracted_text': extracted_text,
             'extracted_skills': extracted_skills,
             'detected_experience_years': detected_experience_years,
             'summary_snippet': extracted_text[:400].strip() if extracted_text else "",
@@ -329,7 +373,422 @@ class AIService:
         }
 
     # ==========================================
-    # INNOVATIVE FEATURE 1: AI MOCK INTERVIEW SIMULATOR
+    # FEATURE 1: INTERACTIVE AI ATS RESUME AUDIT SCANNER
+    # ==========================================
+    @classmethod
+    def scan_resume_for_ats(
+        cls,
+        resume_text: str,
+        target_job_title: str = "",
+        target_job_description: str = "",
+        required_skills: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Performs thorough ATS (Applicant Tracking System) compliance scan:
+        1. Contact info audit (Email, Phone, LinkedIn, GitHub).
+        2. Section layout detection (Education, Skills, Experience, Projects).
+        3. Quantifiable metric density check (Percentages, Numbers, KPIs).
+        4. Action verb power scoring.
+        5. Skill coverage vs target job description.
+        6. Concrete bullet rewrite recommendations.
+        """
+        text_lower = resume_text.lower()
+        extracted_skills = set(cls._extract_skills_from_text(resume_text))
+
+        # 1. Contact Information Audit
+        has_email = bool(re.search(r'[\w\.-]+@[\w\.-]+\.\w+', resume_text))
+        has_phone = bool(re.search(r'(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', resume_text))
+        has_linkedin = bool(re.search(r'linkedin\.com/\S+|linkedin', text_lower))
+        has_github = bool(re.search(r'github\.com/\S+|github', text_lower))
+
+        contact_score = 0
+        if has_email: contact_score += 35
+        if has_phone: contact_score += 35
+        if has_linkedin: contact_score += 15
+        if has_github: contact_score += 15
+
+        # 2. Section Structure Audit
+        common_sections = {
+            'Education': bool(re.search(r'\b(education|academic|degree|b\.?tech|university|college)\b', text_lower)),
+            'Technical Skills': bool(re.search(r'\b(skills|technical skills|technologies|proficiencies|stack)\b', text_lower)),
+            'Work Experience': bool(re.search(r'\b(experience|work experience|employment|internship|history)\b', text_lower)),
+            'Projects': bool(re.search(r'\b(projects|personal projects|academic projects|portfolio)\b', text_lower)),
+            'Certifications': bool(re.search(r'\b(certifications|certificates|licenses|credentials)\b', text_lower)),
+        }
+        present_sections = [k for k, v in common_sections.items() if v]
+        missing_sections = [k for k, v in common_sections.items() if not v and k != 'Certifications']
+        section_score = int((len(present_sections) / max(len(common_sections), 1)) * 100)
+
+        # 3. Action Verbs & Quantifiable Metric Audit
+        ACTION_VERBS = [
+            'engineered', 'implemented', 'architected', 'developed', 'designed',
+            'reduced', 'optimized', 'accelerated', 'orchestrated', 'deployed',
+            'integrated', 'automated', 'spearheaded', 'managed', 'scaled', 'built'
+        ]
+        found_action_verbs = [v for v in ACTION_VERBS if re.search(r'\b' + v + r'\b', text_lower)]
+        action_score = min(len(found_action_verbs) * 12, 100)
+
+        # Quantifiable metrics detector (e.g., "35%", "$10k", "2.5x", "1000 users", "500ms")
+        metrics_matches = re.findall(r'(\d+(?:\.\d+)?%|\$\d+(?:,\d+)?|\b\d+x\b|\b\d+\s*(?:ms|users|requests|qps|clients|teams|stars|downloads)\b)', text_lower)
+        metric_score = min(len(metrics_matches) * 20, 100)
+
+        # 4. Job Skill Coverage Comparison
+        job_skills = set(s.lower() for s in (required_skills or []))
+        if target_job_description:
+            job_skills.update(s.lower() for s in cls._extract_skills_from_text(target_job_description))
+
+        if not job_skills:
+            # Baseline technical job expectations if no custom description provided
+            job_skills = {'python', 'react', 'sql', 'git', 'system design', 'rest api', 'docker'}
+
+        candidate_lower = set(s.lower() for s in extracted_skills)
+        matched_skills = sorted(list(candidate_lower.intersection(job_skills)))
+        missing_skills = sorted(list(job_skills - candidate_lower))
+
+        skill_coverage_score = int((len(matched_skills) / max(len(job_skills), 1)) * 100) if job_skills else 75
+
+        # 5. Composite ATS Score (Weighted Algorithm)
+        general_skills_bonus = min(len(extracted_skills) * 3, 20)
+        ats_score = round(
+            0.30 * skill_coverage_score +
+            0.25 * section_score +
+            0.20 * contact_score +
+            0.15 * action_score +
+            0.10 * metric_score
+        ) + int(general_skills_bonus * 0.4)
+        ats_score = min(max(ats_score, 25), 98)
+
+        # 6. Actionable Bullet Rewrites
+        bullet_enhancements = [
+            {
+                'category': 'Frontend & UI Engineering',
+                'weak_bullet': 'Worked on frontend components using React and styled them with CSS.',
+                'enhanced_bullet': 'Architected 14+ responsive React components with Tailwind CSS and Framer Motion, improving mobile usability scores by 28% and cutting render cycles by 40ms.',
+            },
+            {
+                'category': 'Backend & API Concurrency',
+                'weak_bullet': 'Built backend APIs in Python Flask and connected MySQL database.',
+                'enhanced_bullet': 'Engineered 12 RESTful endpoints using Python Flask and SQLAlchemy with pessimistic row-locking, preventing concurrent double-booking conflicts across 5,000 simulated requests.',
+            },
+            {
+                'category': 'System Performance & CI/CD',
+                'weak_bullet': 'Created Docker containers and deployed the application.',
+                'enhanced_bullet': 'Containerized full-stack services using multi-stage Docker builds, reducing image footprint by 45% and orchestrating automated CI/CD unit testing with 100% test coverage.',
+            }
+        ]
+
+        return {
+            'ats_score': ats_score,
+            'grade': 'Excellent (Tier 1 ATS Ready)' if ats_score >= 85 else ('Good Match' if ats_score >= 70 else 'Needs Optimization'),
+            'contact_audit': {
+                'has_email': has_email,
+                'has_phone': has_phone,
+                'has_linkedin': has_linkedin,
+                'has_github': has_github,
+                'contact_score': contact_score,
+            },
+            'sections_audit': {
+                'present_sections': present_sections,
+                'missing_sections': missing_sections,
+                'section_score': section_score,
+            },
+            'keyword_audit': {
+                'matched_skills': [s.title() for s in matched_skills],
+                'missing_skills': [s.title() for s in missing_skills],
+                'extracted_skills_count': len(extracted_skills),
+                'skill_coverage_score': skill_coverage_score,
+            },
+            'content_strength': {
+                'found_action_verbs': [v.title() for v in found_action_verbs[:6]],
+                'quantifiable_metrics_count': len(metrics_matches),
+                'action_score': action_score,
+                'metric_score': metric_score,
+            },
+            'target_job_title': target_job_title or "Software Engineering Role",
+            'bullet_enhancements': bullet_enhancements,
+        }
+
+    # ==========================================
+    # FEATURE 2: AI CAREER TRAJECTORY & COMPENSATION PREDICTOR
+    # ==========================================
+    @classmethod
+    def predict_career_compensation(
+        cls,
+        department: str,
+        years_experience: float,
+        skills: List[str],
+        target_role: str = "Software Engineer",
+        company_tier: str = "TIER_1_PRODUCT"
+    ) -> Dict[str, Any]:
+        """
+        Predicts career trajectory, estimated salary compensation band (LPA & USD),
+        promotion velocity, and high-ROI skills to learn next based on market heuristics.
+        """
+        # Baseline compensation matrix (India LPA and equivalent USD)
+        BASE_SALARY_LPA = {
+            'Computer Science & Engineering': 12.0,
+            'Information Technology': 11.0,
+            'Electronics & Communication Engineering': 9.5,
+            'Mechanical Engineering': 7.5,
+            'Electrical Engineering': 8.0,
+            'Civil Engineering': 6.5,
+        }
+        dept_base = BASE_SALARY_LPA.get(department, 10.0)
+
+        # Experience multiplier: compounding ~15% YoY
+        exp_factor = (1.0 + 0.16) ** min(years_experience, 10)
+
+        # Company tier multiplier
+        TIER_MULTIPLIERS = {
+            'TIER_1_PRODUCT': 1.75,     # Google, Stripe, Microsoft, Amazon
+            'FINTECH_HIGH_GROWTH': 1.45, # Razorpay, Zerodha, Revolut
+            'MID_TIER_PRODUCT': 1.20,    # SaaS & Mid-market
+            'IT_SERVICES': 0.85,         # Infosys, TCS, Wipro
+        }
+        tier_mult = TIER_MULTIPLIERS.get(company_tier, 1.25)
+
+        # High-value skill premiums
+        user_skills_lower = set(s.lower() for s in skills)
+        skill_premium = 1.0
+
+        if user_skills_lower.intersection({'system design', 'distributed systems', 'microservices'}):
+            skill_premium += 0.15
+        if user_skills_lower.intersection({'machine learning', 'deep learning', 'pytorch', 'nlp', 'llm', 'rag'}):
+            skill_premium += 0.20
+        if user_skills_lower.intersection({'kubernetes', 'docker', 'devops', 'aws', 'cloud computing'}):
+            skill_premium += 0.12
+        if user_skills_lower.intersection({'react', 'typescript', 'node.js', 'fastapi', 'spring boot'}):
+            skill_premium += 0.08
+
+        median_lpa = round(dept_base * exp_factor * tier_mult * skill_premium, 1)
+        min_lpa = round(median_lpa * 0.82, 1)
+        max_lpa = round(median_lpa * 1.28, 1)
+
+        # USD conversion approx (1 LPA ≈ $1,200 USD adjusted for purchasing power)
+        min_usd = int(min_lpa * 2800)
+        median_usd = int(median_lpa * 2800)
+        max_usd = int(max_lpa * 2800)
+
+        # 5-Year Career Progression Timeline
+        progression_timeline = [
+            {
+                'year': 'Year 0 (Entry Level)',
+                'title': f"Associate {target_role}",
+                'expected_lpa': f"₹{round(dept_base * tier_mult, 1)} - ₹{round(dept_base * tier_mult * 1.3, 1)} LPA",
+                'focus': 'Code quality, mastering version control, writing unit tests, and delivering user stories.',
+            },
+            {
+                'year': 'Year 2 (Mid-Level SDE)',
+                'title': f"{target_role} II",
+                'expected_lpa': f"₹{round(dept_base * 1.4 * tier_mult * 1.1, 1)} - ₹{round(dept_base * 1.4 * tier_mult * 1.4, 1)} LPA",
+                'focus': 'End-to-end service ownership, database indexing, caching strategies, and independent PR reviews.',
+            },
+            {
+                'year': 'Year 4 (Senior Engineer)',
+                'title': f"Senior {target_role}",
+                'expected_lpa': f"₹{round(dept_base * 1.9 * tier_mult * 1.2, 1)} - ₹{round(dept_base * 1.9 * tier_mult * 1.6, 1)} LPA",
+                'focus': 'Distributed system architecture, cross-team mentoring, architectural design docs (RFCs), fault tolerance.',
+            },
+            {
+                'year': 'Year 6+ (Staff / Lead Architect)',
+                'title': f"Staff / Lead {target_role}",
+                'expected_lpa': f"₹{round(dept_base * 2.6 * tier_mult * 1.3, 1)} - ₹{round(dept_base * 2.6 * tier_mult * 1.8, 1)}+ LPA",
+                'focus': 'Organizational technical direction, multi-region scalability, driving zero-downtime migrations.',
+            },
+        ]
+
+        # High-ROI Skills to Learn Next
+        HIGH_ROI_CANDIDATES = [
+            {
+                'skill': 'Distributed System Design & Concurrency',
+                'salary_bump': '+28%',
+                'time_to_master': '6 - 8 Weeks',
+                'difficulty': 'Advanced',
+                'impact': 'Crucial for passing Tier-1 System Design rounds and commanding senior engineering bands.'
+            },
+            {
+                'skill': 'Large Language Models (LLM) & RAG Architectures',
+                'salary_bump': '+35%',
+                'time_to_master': '4 - 6 Weeks',
+                'difficulty': 'Moderate',
+                'impact': 'Highest growing enterprise demand in tech for modern AI application integration.'
+            },
+            {
+                'skill': 'Kubernetes & Cloud Infrastructure (Terraform)',
+                'salary_bump': '+22%',
+                'time_to_master': '4 - 5 Weeks',
+                'difficulty': 'Moderate',
+                'impact': 'Enables full lifecycle service deployment and production troubleshooting autonomy.'
+            },
+            {
+                'skill': 'High-Throughput Database Optimization (PostgreSQL / Redis)',
+                'salary_bump': '+18%',
+                'time_to_master': '3 - 4 Weeks',
+                'difficulty': 'Moderate',
+                'impact': 'Differentiates backend engineers by proving mastery in query profiling and lock contention mitigation.'
+            },
+        ]
+        high_roi_skills = [s for s in HIGH_ROI_CANDIDATES if s['skill'].lower() not in user_skills_lower]
+
+        return {
+            'target_role': target_role,
+            'company_tier': company_tier,
+            'compensation_band': {
+                'min_lpa': min_lpa,
+                'median_lpa': median_lpa,
+                'max_lpa': max_lpa,
+                'min_usd': f"${min_usd:,}",
+                'median_usd': f"${median_usd:,}",
+                'max_usd': f"${max_usd:,}",
+            },
+            'progression_timeline': progression_timeline,
+            'high_roi_skills': high_roi_skills[:3],
+            'skill_count': len(skills),
+        }
+
+    # ==========================================
+    # FEATURE 3: AI SMART NETWORKING OUTREACH & REFERRAL GENERATOR
+    # ==========================================
+    @classmethod
+    def generate_referral_pitch(cls, student_user: User, alumnus_user: User, job: Job) -> Dict[str, Any]:
+        """Generate high-conversion cold referral outreach note."""
+        s_profile = student_user.profile
+        s_detail = student_user.student_detail
+        a_profile = alumnus_user.profile
+        a_detail = alumnus_user.alumni_detail
+
+        student_name = f"{s_profile.first_name} {s_profile.last_name}" if s_profile else "Student"
+        alumnus_name = a_profile.first_name if a_profile else "Alumnus"
+        company = job.company
+        role_title = job.title
+
+        student_skills = s_profile.get_skills_list() if s_profile else []
+        job_skills = job.get_skills_list()
+        shared_skills = list(set(s.lower() for s in student_skills).intersection(set(j.lower() for j in job_skills)))
+
+        pitch_text = (
+            f"Hi {alumnus_name},\n\n"
+            f"Hope you are having a great week! My name is {student_name}, currently in my final year "
+            f"studying {s_detail.department if s_detail else 'Engineering'} at our university.\n\n"
+            f"I came across the {role_title} role at {company} and noticed our shared university background. "
+            f"I have extensive hands-on experience in {', '.join([s.title() for s in shared_skills[:3]]) if shared_skills else 'software development'} "
+            f"and recently built production-tested full-stack platforms with database locking and real-time Socket.IO communication.\n\n"
+            f"Given the alignment with {company}'s requirements, would you be open to reviewing my resume for an employee referral? "
+            f"I would be deeply grateful for any advice you might have.\n\n"
+            f"Best regards,\n{student_name}"
+        )
+
+        return {
+            'subject_line': f"Referral Request: {role_title} at {company} - {student_name}",
+            'pitch_text': pitch_text,
+            'target_alumnus_id': alumnus_user.id,
+            'target_alumnus_name': f"{a_profile.first_name} {a_profile.last_name}" if a_profile else "Alumnus",
+            'target_company': company,
+            'target_job_title': role_title,
+            'shared_skills': [s.title() for s in shared_skills],
+        }
+
+    @classmethod
+    def generate_networking_outreach(
+        cls,
+        student_user: User,
+        alumnus_user: User,
+        target_company: Optional[str] = None,
+        target_role: Optional[str] = None,
+        tone: str = 'COFFEE_CHAT',
+        custom_note: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generates tailored networking messages across 4 communication tones:
+        - COFFEE_CHAT: Informal, curious, asking for a 15-minute mentorship call.
+        - FORMAL_REFERRAL: Direct, professional referral pitch.
+        - HIGHER_STUDIES_ADVICE: Focused on MS/PhD and grad school trajectories.
+        - TECHNICAL_GUIDANCE: Architecture, system design, or interview round tips.
+        """
+        s_profile = student_user.profile
+        s_detail = student_user.student_detail
+        a_profile = alumnus_user.profile
+        a_detail = alumnus_user.alumni_detail
+
+        student_name = f"{s_profile.first_name} {s_profile.last_name}" if s_profile else "Student"
+        alumnus_first_name = a_profile.first_name if a_profile else "Alumnus"
+        company = target_company or (a_detail.current_company if a_detail else "your company")
+        role_title = target_role or (a_detail.current_position if a_detail else "Software Engineer")
+
+        student_skills = s_profile.get_skills_list() if s_profile else ['Software Development']
+        dept = s_detail.department if s_detail else "Engineering"
+        grad_year = s_detail.expected_graduation_year if s_detail else 2026
+
+        if tone == 'FORMAL_REFERRAL':
+            subject_line = f"Referral Request: {role_title} at {company} - {student_name} ({dept} '{grad_year})"
+            body = (
+                f"Dear {alumnus_first_name},\n\n"
+                f"I hope you are doing well. My name is {student_name}, and I am currently a senior pursuing my degree in "
+                f"{dept} (Class of {grad_year}). I have been following your impressive engineering journey at {company}.\n\n"
+                f"I am actively preparing for the {role_title} opening at {company}. My technical experience centers on "
+                f"{', '.join(student_skills[:3])}, and I recently engineered production-ready full-stack projects featuring real-time "
+                f"WebSockets and transactional database concurrency.\n\n"
+                f"Given our shared university background, would you be open to reviewing my resume for a potential employee referral? "
+                f"I have attached my portfolio and resume link for your convenience. Thank you so much for your time and guidance!\n\n"
+                f"Warm regards,\n{student_name}"
+            )
+            follow_up_tip = "Follow up politely after 5 business days if no reply. Keep follow-up under 2 sentences."
+
+        elif tone == 'HIGHER_STUDIES_ADVICE':
+            subject_line = f"University Mentorship Inquiry: Graduate Studies Advice - {student_name}"
+            body = (
+                f"Hi {alumnus_first_name},\n\n"
+                f"I hope this message finds you well! I am {student_name}, a {dept} student at our university.\n\n"
+                f"As I evaluate my post-graduation trajectory, I am strongly considering graduate studies (Master's) to specialize in "
+                f"{student_skills[0] if student_skills else 'Advanced Computing'}. I noticed your academic background and professional success "
+                f"at {company}, and I would deeply appreciate your perspective on choosing research labs versus entering industry first.\n\n"
+                f"Would you be open to a quick 10-15 minute virtual conversation sometime in the coming weeks?\n\n"
+                f"Best regards,\n{student_name}"
+            )
+            follow_up_tip = "Include specific questions about thesis vs coursework degrees in your call."
+
+        elif tone == 'TECHNICAL_GUIDANCE':
+            subject_line = f"Quick Technical Architecture Question - {student_name} ({dept})"
+            body = (
+                f"Hi {alumnus_first_name},\n\n"
+                f"I came across your profile in our university Alumni Directory and noticed your work as {role_title} at {company}.\n\n"
+                f"I am currently architecting a final-year engineering system utilizing {', '.join(student_skills[:2])}. As we scale our data layer, "
+                f"we are navigating concurrency and distributed caching decisions. Knowing your extensive expertise in production engineering, "
+                f"I would be thrilled to learn how your team tackles similar distributed constraints at {company}.\n\n"
+                f"If your schedule allows for brief guidance, I would be very grateful for any advice!\n\n"
+                f"Thanks and best regards,\n{student_name}"
+            )
+            follow_up_tip = "Mention one concrete technical bottleneck you are actively solving."
+
+        else: # Default: COFFEE_CHAT
+            subject_line = f"Fellow Student Coffee Chat: Learning from your journey at {company}"
+            body = (
+                f"Hi {alumnus_first_name},\n\n"
+                f"I hope you're having a productive week! My name is {student_name}, currently in my final year studying {dept} at our alma mater.\n\n"
+                f"I noticed your transition from campus to {company} as {role_title}. As someone aiming to build a career in "
+                f"{', '.join(student_skills[:2])}, your path is truly inspiring.\n\n"
+                f"Would you have 15 minutes for a virtual coffee chat sometime next week? I'd love to hear your advice on transitioning from "
+                f"academic coursework to high-impact production engineering at {company}.\n\n"
+                f"Thank you for giving back to the student community!\n\n"
+                f"Best,\n{student_name}"
+            )
+            follow_up_tip = "Send during Tuesday or Wednesday mornings (9:30 AM - 11:00 AM) for highest open rates."
+
+        if custom_note:
+            body += f"\n\nP.S. {custom_note}"
+
+        return {
+            'tone': tone,
+            'subject_line': subject_line,
+            'message_body': body,
+            'target_alumnus_name': f"{a_profile.first_name} {a_profile.last_name}" if a_profile else "Alumnus",
+            'target_company': company,
+            'target_role': role_title,
+            'follow_up_tip': follow_up_tip,
+        }
+
+    # ==========================================
+    # INNOVATIVE FEATURE 4: AI MOCK INTERVIEW SIMULATOR
     # ==========================================
     MOCK_QUESTIONS_BANK = {
         'FULL_STACK': [
@@ -443,7 +902,6 @@ class AIService:
         clean_answer = cls._clean_text(student_answer)
         clean_domain = domain.upper() if domain.upper() in cls.MOCK_QUESTIONS_BANK else 'FULL_STACK'
 
-        # Locate matching question metadata
         target_q = None
         for q in cls.MOCK_QUESTIONS_BANK.get(clean_domain, []):
             if q['question'].lower() in question_text.lower() or question_text.lower() in q['question'].lower():
@@ -451,108 +909,66 @@ class AIService:
                 break
 
         if not target_q:
-            # Fallback to generic evaluation
-            target_q = cls.MOCK_QUESTIONS_BANK['FULL_STACK'][0]
+            target_q = cls.MOCK_QUESTIONS_BANK[clean_domain][0]
 
         required_keywords = target_q['required_keywords']
-        matched_keywords = [kw for kw in required_keywords if kw in clean_answer]
-        missing_keywords = [kw for kw in required_keywords if kw not in clean_answer]
+        matched_keywords = [
+            kw for kw in required_keywords
+            if re.search(r'\b' + re.escape(kw) + r'(?:s|es|ed|ing|al)?\b', clean_answer)
+        ]
+        missing_keywords = [kw for kw in required_keywords if kw not in matched_keywords]
 
-        # Calculate scores
-        keyword_coverage = len(matched_keywords) / max(len(required_keywords), 1)
+        keyword_coverage_ratio = len(matched_keywords) / max(len(required_keywords), 1)
+
+        # Vector similarity with model benchmark answer
+        docs = [clean_answer, cls._clean_text(target_q['model_answer'])]
+        tfidf = TfidfVectorizer(stop_words='english', ngram_range=(1, 2))
+        try:
+            tfidf_mat = tfidf.fit_transform(docs)
+            cos_sim = float(cosine_similarity(tfidf_mat[0:1], tfidf_mat[1:2])[0][0])
+        except Exception:
+            cos_sim = 0.35
+
         word_count = len(clean_answer.split())
+        length_penalty = 1.0 if word_count >= 15 else max(word_count / 15.0, 0.7)
 
-        # Length & depth scoring
-        length_score = min(1.0, word_count / 80.0)  # optimal answer >= 80 words
+        technical_score = round((0.60 * keyword_coverage_ratio + 0.40 * max(cos_sim, 0.45)) * length_penalty * 100, 1)
+        technical_score = min(max(technical_score, 20.0), 98.0)
 
-        # Composite score out of 100
-        overall_score = round((keyword_coverage * 0.65 + length_score * 0.35) * 100)
-        overall_score = min(max(overall_score, 20), 98) if word_count >= 10 else 15
-
-        # Rating tier
-        if overall_score >= 85:
-            tier = 'Exceptional'
-            headline = 'Strong Technical Mastery — Interview Ready!'
-        elif overall_score >= 70:
-            tier = 'Proficient'
-            headline = 'Solid Understanding with Minor Gaps in Depth'
-        elif overall_score >= 50:
-            tier = 'Developing'
-            headline = 'Basic Concepts Present, Needs Concrete Examples'
+        # Grade classification
+        if technical_score >= 85:
+            grade = "A (Strong Hire / Advanced Mastery)"
+            feedback_summary = "Outstanding technical depth! You thoroughly addressed the core architectural and concurrency concerns with precise terminology."
+        elif technical_score >= 70:
+            grade = "B (Hire / Solid Foundations)"
+            feedback_summary = "Solid comprehension. Your answer is logically sound and hits key concepts, but could benefit from deeper mention of failure modes and edge cases."
+        elif technical_score >= 50:
+            grade = "C (Borderline / Needs Depth)"
+            feedback_summary = "Partial answer. You touched on the topic but missed critical architectural keywords and trade-off considerations."
         else:
-            tier = 'Needs Improvement'
-            headline = 'Superficial Answer — Review Benchmark Solution'
+            grade = "D (Revisit Concepts)"
+            feedback_summary = "Incomplete response. Focus on understanding the core mechanisms and review the provided model answer."
 
         return {
-            'overall_score': overall_score,
-            'performance_tier': tier,
-            'summary_headline': headline,
-            'keyword_coverage_ratio': round(keyword_coverage * 100),
-            'matched_keywords': matched_keywords,
-            'missing_keywords': missing_keywords,
+            'score': technical_score,
+            'overall_score': technical_score,
+            'grade': grade,
+            'feedback_summary': feedback_summary,
             'word_count': word_count,
+            'matched_keywords': [k.lower() for k in matched_keywords],
+            'missing_keywords': [k.lower() for k in missing_keywords],
             'model_answer': target_q['model_answer'],
+            'coaching_tips': target_q['tips'],
             'improvement_tips': target_q['tips'],
+            'difficulty': target_q['difficulty'],
         }
 
     # ==========================================
-    # INNOVATIVE FEATURE 2: AI SMART REFERRAL PITCH GENERATOR
-    # ==========================================
-    @classmethod
-    def generate_referral_pitch(cls, student_user: User, alumnus_user: User, job: Job) -> Dict[str, Any]:
-        """
-        Generate a personalized, highly professional job referral pitch combining
-        student skills, job requirements, and alumni shared university affiliation.
-        """
-        s_profile = student_user.profile
-        s_detail = student_user.student_detail
-        a_profile = alumnus_user.profile
-        a_detail = alumnus_user.alumni_detail
-
-        student_name = f"{s_profile.first_name} {s_profile.last_name}" if s_profile else "Aarav Sharma"
-        alumnus_name = f"{a_profile.first_name}" if a_profile else "Alumnus"
-        department = s_detail.department if s_detail else "Computer Science & Engineering"
-        company = job.company
-        role_title = job.title
-
-        # Determine overlapping skills
-        s_skills = set(s.lower() for s in (s_profile.get_skills_list() if s_profile else []))
-        j_skills = set(s.lower() for s in job.get_skills_list())
-        shared_skills = sorted(list(s_skills.intersection(j_skills)))
-        skills_summary = ", ".join([s.title() for s in shared_skills[:3]]) if shared_skills else "Python, React, and system architecture"
-
-        pitch_text = (
-            f"Hi {alumnus_name},\n\n"
-            f"I hope you're having a great week! My name is {student_name}, a fellow student from the {department} "
-            f"department at our university.\n\n"
-            f"I came across the {role_title} opening at {company} and was inspired by your professional journey there. "
-            f"I have built several production-oriented projects focusing on {skills_summary}, and I believe my background "
-            f"strongly aligns with the team's engineering needs.\n\n"
-            f"I would be deeply grateful for 10 minutes of your advice, or if you feel my profile is a good fit, a referral "
-            f"for this position. I have attached my updated resume and project portfolio for your review.\n\n"
-            f"Thank you so much for your time and for supporting our university alumni community!\n\n"
-            f"Warm regards,\n{student_name}"
-        )
-
-        subject_line = f"Referral Request: {role_title} at {company} — Fellow {department} Graduate"
-
-        return {
-            'subject_line': subject_line,
-            'pitch_text': pitch_text,
-            'target_alumnus_id': alumnus_user.id,
-            'target_alumnus_name': f"{a_profile.first_name} {a_profile.last_name}" if a_profile else "Alumnus",
-            'target_company': company,
-            'target_job_title': role_title,
-            'shared_skills': [s.title() for s in shared_skills],
-        }
-
-    # ==========================================
-    # INNOVATIVE FEATURE 3: GLOBAL ALUMNI CAREER ANALYTICS MATRIX
+    # GLOBAL ALUMNI CAREER ANALYTICS MATRIX
     # ==========================================
     @classmethod
     def get_alumni_analytics_hub_data(cls) -> Dict[str, Any]:
         """Aggregate global distribution, industry placement flow, and salary trajectory data."""
-        # Realistic data aggregated from active portal records and institutional alumni metrics
         global_hubs = [
             {'city': 'Bengaluru, India', 'country': 'India', 'alumni_count': 142, 'top_employers': 'Google, Microsoft, Flipkart', 'lat': 12.9716, 'lng': 77.5946},
             {'city': 'San Francisco / Silicon Valley', 'country': 'USA', 'alumni_count': 88, 'top_employers': 'Stripe, Meta, Apple', 'lat': 37.7749, 'lng': -122.4194},

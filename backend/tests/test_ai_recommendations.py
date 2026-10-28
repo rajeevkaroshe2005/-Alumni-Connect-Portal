@@ -100,3 +100,66 @@ def test_global_alumni_analytics_hub(client, seeded_users, auth_headers):
     assert len(analytics['global_hubs']) >= 5
     assert analytics['total_alumni_network'] > 100
     assert analytics['placement_percentage'] > 90
+
+
+def test_ai_resume_ats_scan(client, seeded_users, auth_headers):
+    """Test AI ATS resume compliance scanning and bullet suggestions."""
+    sample_resume = """
+    Aarav Sharma
+    aarav@university.edu | (555) 234-5678 | linkedin.com/in/aarav | github.com/aarav
+    Education: B.Tech in Computer Science & Engineering (2026)
+    Technical Skills: Python, React, JavaScript, SQL, Git, Docker, System Design
+    Projects:
+    Alumni Connect Portal: Engineered full-stack web application with React and Flask, serving 1,000 users and cutting latency by 35%.
+    Work Experience:
+    Software Engineering Intern: Developed REST APIs and optimized database queries, reducing query time by 40ms.
+    """
+    job = seeded_users['job']
+    res = client.post('/api/ai/resume/scan', json={
+        'resume_text': sample_resume,
+        'job_id': job.id,
+    }, headers=auth_headers['student'])
+
+    assert res.status_code == 200
+    audit = res.get_json()['data']['audit']
+    assert audit['ats_score'] >= 60
+    assert audit['contact_audit']['has_email'] is True
+    assert audit['contact_audit']['has_linkedin'] is True
+    assert 'Education' in audit['sections_audit']['present_sections']
+    assert len(audit['bullet_enhancements']) >= 3
+
+
+def test_ai_career_compensation_predict(client, seeded_users, auth_headers):
+    """Test AI salary and career progression timeline predictor."""
+    res = client.post('/api/ai/career/predict', json={
+        'department': 'Computer Science & Engineering',
+        'years_experience': 2,
+        'skills': ['Python', 'React', 'System Design', 'Kubernetes'],
+        'target_role': 'Software Engineer',
+        'company_tier': 'TIER_1_PRODUCT',
+    }, headers=auth_headers['student'])
+
+    assert res.status_code == 200
+    prediction = res.get_json()['data']['prediction']
+    assert 'compensation_band' in prediction
+    assert prediction['compensation_band']['median_lpa'] > 15
+    assert len(prediction['progression_timeline']) == 4
+    assert len(prediction['high_roi_skills']) > 0
+
+
+def test_ai_smart_outreach_generate(client, seeded_users, auth_headers):
+    """Test customized alumni outreach note across communication tones."""
+    alumni = seeded_users['alumni']
+    res = client.post('/api/ai/outreach/generate', json={
+        'alumnus_id': alumni.id,
+        'tone': 'COFFEE_CHAT',
+        'target_company': 'Google',
+        'target_role': 'Senior Software Engineer',
+    }, headers=auth_headers['student'])
+
+    assert res.status_code == 200
+    outreach = res.get_json()['data']['outreach']
+    assert 'subject_line' in outreach
+    assert 'message_body' in outreach
+    assert 'Google' in outreach['message_body']
+    assert 'follow_up_tip' in outreach
