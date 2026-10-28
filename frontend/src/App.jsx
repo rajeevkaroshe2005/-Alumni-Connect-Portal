@@ -80,7 +80,7 @@ export default function App() {
     <Router>
       <AuthProvider>
         <SocketProvider>
-          <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans antialiased">
+          <div className="min-h-screen flex flex-col bg-[#F5F1E8] text-[#333333] font-sans antialiased">
             <Navbar />
             <main className="flex-1">
               <Routes>

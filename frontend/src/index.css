@@ -1,29 +1,107 @@
 @import "tailwindcss";
 
+@theme {
+  --color-forest: #244B3A;
+  --color-forest-hover: #3A5F50;
+  --color-forest-secondary: #3A5F50;
+  --color-cream: #F5F1E8;
+  --color-gold: #C4A878;
+  --color-charcoal: #333333;
+
+  /* Overwrite brand scales to match exact tokens */
+  --color-indigo-50: #eef4f1;
+  --color-indigo-100: #dce7e1;
+  --color-indigo-200: #bdd1c6;
+  --color-indigo-300: #96b5a4;
+  --color-indigo-400: #6d9681;
+  --color-indigo-500: #3A5F50; /* Secondary green */
+  --color-indigo-600: #244B3A; /* Primary forest green */
+  --color-indigo-700: #1d3d2f;
+  --color-indigo-800: #173025;
+  --color-indigo-900: #10211a;
+
+  --color-blue-50: #eef4f1;
+  --color-blue-100: #dce7e1;
+  --color-blue-200: #bdd1c6;
+  --color-blue-500: #3A5F50;
+  --color-blue-600: #244B3A;
+  --color-blue-700: #1d3d2f;
+
+  /* Map default background slate-50 to Warm cream #F5F1E8 */
+  --color-slate-50: #F5F1E8;
+  --color-gray-50: #F5F1E8;
+
+  /* Map default headings slate-900 to Charcoal #333333 */
+  --color-slate-900: #333333;
+  --color-gray-900: #333333;
+  --color-slate-800: #333333;
+  --color-gray-800: #333333;
+}
+
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased;
-    background-color: #f8fafc;
-    color: #0f172a;
+    background-color: #F5F1E8 !important; /* Warm cream */
+    color: #333333 !important;           /* Charcoal */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
   }
 
   /* Universal high-contrast text on all form controls */
   input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
   select,
   textarea {
-    color: #0f172a !important;
-    background-color: #ffffff;
+    color: #333333 !important;
+    background-color: #FFFFFF !important;
+    border-color: #D8D2C4;
   }
 
   /* Crisp placeholder text */
   ::placeholder {
-    color: #94a3b8 !important;
+    color: #8C8272 !important;
     opacity: 1 !important;
   }
 
   /* Dropdown option items */
   option {
-    color: #0f172a !important;
-    background-color: #ffffff !important;
+    color: #333333 !important;
+    background-color: #FFFFFF !important;
   }
+}
+
+/* Custom token helper utilities */
+.bg-forest {
+  background-color: #244B3A !important;
+}
+
+.bg-forest-hover:hover {
+  background-color: #3A5F50 !important;
+}
+
+.bg-cream {
+  background-color: #F5F1E8 !important;
+}
+
+.bg-gold {
+  background-color: #C4A878 !important;
+}
+
+.text-forest {
+  color: #244B3A !important;
+}
+
+.text-gold {
+  color: #C4A878 !important;
+}
+
+.text-charcoal {
+  color: #333333 !important;
+}
+
+.border-gold {
+  border-color: #C4A878 !important;
+}
+
+.border-forest {
+  border-color: #244B3A !important;
 }
