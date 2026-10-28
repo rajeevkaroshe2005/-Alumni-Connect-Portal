@@ -103,7 +103,7 @@ export const AlumniDirectoryPage = () => {
               placeholder="Search by name, company, position, or skills (e.g. Python, Google, ML)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
             />
           </div>
           <button
@@ -121,11 +121,11 @@ export const AlumniDirectoryPage = () => {
               setSelectedDept(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700"
+            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option value="">All Departments</option>
+            <option value="" className="text-slate-900 bg-white">All Departments</option>
             {filters.departments?.map((d, i) => (
-              <option key={i} value={d}>{d}</option>
+              <option key={i} value={d} className="text-slate-900 bg-white">{d}</option>
             ))}
           </select>
 
@@ -135,11 +135,11 @@ export const AlumniDirectoryPage = () => {
               setSelectedCompany(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700"
+            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option value="">All Companies</option>
+            <option value="" className="text-slate-900 bg-white">All Companies</option>
             {filters.companies?.map((c, i) => (
-              <option key={i} value={c}>{c}</option>
+              <option key={i} value={c} className="text-slate-900 bg-white">{c}</option>
             ))}
           </select>
 
@@ -149,15 +149,15 @@ export const AlumniDirectoryPage = () => {
               setSelectedYear(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700"
+            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option value="">All Graduation Years</option>
+            <option value="" className="text-slate-900 bg-white">All Graduation Years</option>
             {filters.graduation_years?.map((y, i) => (
-              <option key={i} value={y}>Class of {y}</option>
+              <option key={i} value={y} className="text-slate-900 bg-white">Class of {y}</option>
             ))}
           </select>
 
-          <label className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer select-none">
+          <label className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={verifiedOnly}

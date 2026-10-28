@@ -3,5 +3,27 @@
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased;
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+
+  /* Universal high-contrast text on all form controls */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+  select,
+  textarea {
+    color: #0f172a !important;
+    background-color: #ffffff;
+  }
+
+  /* Crisp placeholder text */
+  ::placeholder {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+  }
+
+  /* Dropdown option items */
+  option {
+    color: #0f172a !important;
+    background-color: #ffffff !important;
   }
 }

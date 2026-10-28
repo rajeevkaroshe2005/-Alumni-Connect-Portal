@@ -133,7 +133,7 @@ export const JobsPage = () => {
               placeholder="Search by job title, company name, or skills (e.g. Full Stack, Amazon, Python)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
             />
           </div>
           <button
@@ -151,13 +151,13 @@ export const JobsPage = () => {
               setJobType(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700"
+            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option value="">All Opportunity Types</option>
-            <option value="FULL_TIME">Full-Time Role</option>
-            <option value="INTERNSHIP">Internship</option>
-            <option value="REMOTE">Remote Role</option>
-            <option value="PART_TIME">Part-Time</option>
+            <option value="" className="text-slate-900 bg-white">All Opportunity Types</option>
+            <option value="FULL_TIME" className="text-slate-900 bg-white">Full-Time Role</option>
+            <option value="INTERNSHIP" className="text-slate-900 bg-white">Internship</option>
+            <option value="REMOTE" className="text-slate-900 bg-white">Remote Role</option>
+            <option value="PART_TIME" className="text-slate-900 bg-white">Part-Time</option>
           </select>
 
           <select
@@ -166,12 +166,12 @@ export const JobsPage = () => {
               setExpLevel(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700"
+            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
-            <option value="">All Experience Levels</option>
-            <option value="ENTRY">Entry Level (Fresh Graduates)</option>
-            <option value="MID">Mid Level (1-4 Years)</option>
-            <option value="SENIOR">Senior Level (5+ Years)</option>
+            <option value="" className="text-slate-900 bg-white">All Experience Levels</option>
+            <option value="ENTRY" className="text-slate-900 bg-white">Entry Level (Fresh Graduates)</option>
+            <option value="MID" className="text-slate-900 bg-white">Mid Level (1-4 Years)</option>
+            <option value="SENIOR" className="text-slate-900 bg-white">Senior Level (5+ Years)</option>
           </select>
         </div>
       </div>
