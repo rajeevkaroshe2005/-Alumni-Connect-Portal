@@ -32,3 +32,8 @@ Thumbs.db
 # Uploads
 backend/uploads/*
 !backend/uploads/.gitkeep
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
