@@ -180,17 +180,25 @@ def scan_resume_ats_endpoint():
     required_skills = []
 
     # Check for file upload
+    file_uploaded = False
     if 'resume' in request.files:
         file = request.files['resume']
         if file and file.filename != '':
+            file_uploaded = True
             file_bytes = file.read()
             if len(file_bytes) > 5 * 1024 * 1024:
                 return api_error("File size exceeds 5MB limit.", 400)
             try:
                 parsed = AIService.parse_resume(file_bytes, file.filename)
-                resume_text = parsed.get('extracted_text', '')
+                resume_text = (parsed.get('extracted_text') or '').strip()
             except Exception as e:
                 return api_error(f"Error reading resume file: {str(e)}", 400)
+
+            if not resume_text:
+                return api_error(
+                    "Unable to extract text from the uploaded PDF. It appears to be a scanned or image-based PDF without selectable text. Please switch to the 'Paste Raw Text' tab above and paste your resume text directly.",
+                    400
+                )
 
     # Support raw text or fallback form fields
     if not resume_text:

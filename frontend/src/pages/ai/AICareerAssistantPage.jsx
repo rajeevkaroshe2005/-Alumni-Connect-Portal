@@ -92,9 +92,7 @@ export default function AICareerAssistantPage() {
     formData.append('resume', file);
 
     try {
-      const res = await api.post('/ai/parse-resume', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await api.post('/ai/parse-resume', formData);
       if (res?.success) {
         const skills = res.data?.extracted_skills || [];
         setExtractedSkills(skills);

@@ -71,9 +71,7 @@ export const AIResumeScannerPage = () => {
         if (selectedJobId) formData.append('job_id', selectedJobId)
         if (customJobDesc) formData.append('target_job_description', customJobDesc)
 
-        res = await api.post('/ai/resume/scan', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
+        res = await api.post('/ai/resume/scan', formData)
       } else {
         if (!resumeText.trim()) {
           setError('Please paste your resume text to scan.')
