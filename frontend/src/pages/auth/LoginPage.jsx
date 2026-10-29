@@ -55,7 +55,7 @@ export const LoginPage = () => {
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
-              onClick={() => fillDemoAccount('student@alumniportal.edu')}
+              onClick={() => fillDemoAccount('aarav.mehta@student.edu')}
               className="px-2.5 py-2 bg-[#F5F1E8] hover:bg-[#C4A878]/30 hover:border-[#244B3A] border border-[#D8D2C4] rounded-xl text-left transition text-xs group"
             >
               <div className="font-bold text-[#333333] group-hover:text-[#244B3A]">Student</div>
@@ -64,7 +64,7 @@ export const LoginPage = () => {
 
             <button
               type="button"
-              onClick={() => fillDemoAccount('priya@alumniportal.edu')}
+              onClick={() => fillDemoAccount('priya.sharma@alumni.edu')}
               className="px-2.5 py-2 bg-[#F5F1E8] hover:bg-[#C4A878]/30 hover:border-[#244B3A] border border-[#D8D2C4] rounded-xl text-left transition text-xs group"
             >
               <div className="font-bold text-[#333333] group-hover:text-[#244B3A]">Alumni</div>

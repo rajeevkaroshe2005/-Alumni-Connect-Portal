@@ -142,7 +142,14 @@ def login():
     if not email or not password:
         return api_error("Email and password are required.", 400)
 
-    user = User.query.filter_by(email=email).first()
+    DEMO_EMAIL_ALIASES = {
+        'priya@alumniportal.edu': 'priya.sharma@alumni.edu',
+        'student@alumniportal.edu': 'aarav.mehta@student.edu',
+        'alumni@alumniportal.edu': 'priya.sharma@alumni.edu',
+    }
+    lookup_email = DEMO_EMAIL_ALIASES.get(email, email)
+
+    user = User.query.filter_by(email=lookup_email).first()
     if not user or not AuthService.verify_password(password, user.password_hash):
         return api_error("Invalid email or password.", 401)
 
