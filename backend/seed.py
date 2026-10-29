@@ -10,19 +10,9 @@ from app.services.auth_service import AuthService
 
 def seed_all():
     """Populate database with clean, attributed demonstration records."""
+    print("Clearing and recreating tables...")
+    db.drop_all()
     db.create_all()
-    print("Clearing existing records...")
-    db.session.query(MentorshipBooking).delete()
-    db.session.query(MentorAvailabilitySlot).delete()
-    db.session.query(MentorProfile).delete()
-    db.session.query(Job).delete()
-    db.session.query(Event).delete()
-    db.session.query(Notification).delete()
-    db.session.query(AlumniDetail).delete()
-    db.session.query(StudentDetail).delete()
-    db.session.query(Profile).delete()
-    db.session.query(User).delete()
-    db.session.commit()
 
     pwd_hash = AuthService.hash_password("Password123!")
 
