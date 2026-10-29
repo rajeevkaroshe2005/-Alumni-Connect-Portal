@@ -59,7 +59,7 @@ export const MentorDiscoveryPage = () => {
         </div>
 
         <Link
-          to="/mentorship/bookings"
+          to="/mentorship/my-bookings"
           className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-xs transition shrink-0"
         >
           <Calendar className="w-4 h-4 text-indigo-600" />
@@ -149,7 +149,12 @@ export const MentorDiscoveryPage = () => {
                   <p className="text-xs text-slate-600 line-clamp-2">{m.bio}</p>
 
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {m.expertise_areas?.slice(0, 4).map((exp, idx) => (
+                    {(Array.isArray(m.expertise_areas)
+                      ? m.expertise_areas
+                      : typeof m.expertise_areas === 'string'
+                        ? m.expertise_areas.split(',').map((s) => s.trim())
+                        : []
+                    ).slice(0, 4).map((exp, idx) => (
                       <span key={idx} className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium">
                         {exp}
                       </span>

@@ -48,7 +48,7 @@ export default function EventDetailPage() {
         setAttendees(resAttendees.value.data?.attendees || []);
       }
       if (resFeedbacks.status === 'fulfilled' && resFeedbacks.value?.success) {
-        setFeedbacks(resFeedbacks.value.data?.feedback || []);
+        setFeedbacks(resFeedbacks.value.data?.feedbacks || resFeedbacks.value.data?.feedback || []);
       }
     } catch (err) {
       setError(err.message || 'Failed to retrieve event details.');
@@ -82,10 +82,12 @@ export default function EventDetailPage() {
       setCheckingIn(true);
       setCheckinStatusMsg('');
       const res = await api.post(`/events/${id}/checkin`, {
+        checkin_token: checkinTokenInput.trim(),
         token: checkinTokenInput.trim()
       });
       if (res?.success) {
-        setCheckinStatusMsg(`Success: ${res.data?.attendee_name || 'Attendee'} successfully checked in!`);
+        const name = res.data?.rsvp?.user_name || res.data?.attendee_name || 'Attendee';
+        setCheckinStatusMsg(`Success: ${name} successfully checked in!`);
         setCheckinTokenInput('');
         fetchEventData();
       }

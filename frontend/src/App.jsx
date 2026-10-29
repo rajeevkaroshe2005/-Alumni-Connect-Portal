@@ -58,6 +58,7 @@ import DonationCampaignsPage from './pages/donations/DonationCampaignsPage'
 import ProfilePage from './pages/profile/ProfilePage'
 
 // Admin Management
+import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AdminVerificationPage } from './pages/admin/AdminVerificationPage'
 import { AdminUserManagementPage } from './pages/admin/AdminUserManagementPage'
 import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage'
@@ -176,6 +177,10 @@ export default function App() {
                       <MyBookingsPage />
                     </ProtectedRoute>
                   }
+                />
+                <Route
+                  path="/mentorship/bookings"
+                  element={<Navigate to="/mentorship/my-bookings" replace />}
                 />
                 <Route
                   path="/mentorship/availability"
@@ -332,12 +337,24 @@ export default function App() {
 
                 {/* Administrator Panel Routes */}
                 <Route
-                  path="/admin/verifications"
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN']}>
+                      <AdminDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/verification"
                   element={
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <AdminVerificationPage />
                     </ProtectedRoute>
                   }
+                />
+                <Route
+                  path="/admin/verifications"
+                  element={<Navigate to="/admin/verification" replace />}
                 />
                 <Route
                   path="/admin/users"
@@ -348,12 +365,16 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/admin/logs"
+                  path="/admin/audit-logs"
                   element={
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <AdminAuditLogsPage />
                     </ProtectedRoute>
                   }
+                />
+                <Route
+                  path="/admin/logs"
+                  element={<Navigate to="/admin/audit-logs" replace />}
                 />
 
                 {/* Catch-All 404 */}

@@ -13,7 +13,7 @@ export default function MessagesPage() {
   const { socket } = useSocket();
   const { partnerId: routePartnerId } = useParams();
   const [searchParams] = useSearchParams();
-  const queryPartnerId = searchParams.get('partner');
+  const queryPartnerId = searchParams.get('partnerId') || searchParams.get('partner');
 
   const activePartnerId = routePartnerId || queryPartnerId;
 
@@ -112,13 +112,25 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!socket) return;
 
+    if (selectedPartner && user) {
+      const p1 = Math.min(user.id, selectedPartner.partner_id);
+      const p2 = Math.max(user.id, selectedPartner.partner_id);
+      socket.emit('join_conversation', {
+        token: localStorage.getItem('alumni_portal_token'),
+        conversation_id: `conv_${p1}_${p2}`,
+      });
+    }
+
     const handleIncomingMessage = (msg) => {
       // If message is from currently active conversation partner
       if (
         selectedPartner &&
         (msg.sender_id === selectedPartner.partner_id || msg.recipient_id === selectedPartner.partner_id)
       ) {
-        setMessages((prev) => [...prev, msg]);
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
       }
 
       // Update conversations list snippet and unread count

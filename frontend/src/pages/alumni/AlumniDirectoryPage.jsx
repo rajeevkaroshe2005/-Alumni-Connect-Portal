@@ -240,7 +240,7 @@ export const AlumniDirectoryPage = () => {
 
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
                   <Link
-                    to={`/messages?partnerId=${item.id}`}
+                    to={`/messages/${item.id}`}
                     className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                     title="Send Direct Message"
                   >

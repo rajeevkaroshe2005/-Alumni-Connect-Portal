@@ -325,7 +325,7 @@ export const StudentDashboard = () => {
                 <Clock className="w-4 h-4 text-indigo-600" />
                 <span>My Mentorship Sessions</span>
               </h3>
-              <Link to="/mentorship/bookings" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">
+              <Link to="/mentorship/my-bookings" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700">
                 All Bookings
               </Link>
             </div>

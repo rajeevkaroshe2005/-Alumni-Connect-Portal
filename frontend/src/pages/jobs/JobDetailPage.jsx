@@ -139,7 +139,12 @@ export const JobDetailPage = () => {
         <div className="space-y-3 pt-4 border-t border-slate-100">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Required Skills & Technologies</h3>
           <div className="flex flex-wrap gap-2">
-            {job.skills_required?.map((s, idx) => (
+            {(Array.isArray(job.skills_required)
+              ? job.skills_required
+              : typeof job.skills_required === 'string'
+                ? job.skills_required.split(',').map((s) => s.trim())
+                : []
+            ).map((s, idx) => (
               <span key={idx} className="px-3 py-1 bg-slate-100 text-slate-800 rounded-lg text-xs font-semibold">
                 {s}
               </span>

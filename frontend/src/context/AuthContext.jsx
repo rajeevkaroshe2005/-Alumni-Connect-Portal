@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import api from '../services/api'
 
 const AuthContext = createContext(null)
@@ -14,6 +14,13 @@ export const AuthProvider = ({ children }) => {
   })
   const [token, setToken] = useState(() => localStorage.getItem('alumni_portal_token'))
   const [loading, setLoading] = useState(true)
+
+  const logout = useCallback(() => {
+    setToken(null)
+    setUser(null)
+    localStorage.removeItem('alumni_portal_token')
+    localStorage.removeItem('alumni_portal_user')
+  }, [])
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -33,7 +40,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     fetchCurrentUser()
-  }, [token])
+  }, [token, logout])
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password })
@@ -57,13 +64,6 @@ export const AuthProvider = ({ children }) => {
       return res.data.user
     }
     throw new Error(res.message || 'Registration failed')
-  }
-
-  const logout = () => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('alumni_portal_token')
-    localStorage.removeItem('alumni_portal_user')
   }
 
   const updateUserProfile = (updatedUser) => {

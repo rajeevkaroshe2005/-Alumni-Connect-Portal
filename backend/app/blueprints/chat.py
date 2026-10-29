@@ -111,7 +111,28 @@ def send_message_api():
     try:
         db.session.add(new_msg)
         db.session.commit()
-        return api_success(data={'message': new_msg.to_dict()}, status_code=201)
+        msg_dict = new_msg.to_dict()
+
+        # Emit real-time WebSocket events to both participant rooms
+        try:
+            from .. import socketio
+            room_name = f"room_{conversation_id}"
+            socketio.emit('new_message', msg_dict, to=room_name)
+            socketio.emit('new_message', msg_dict, to=f"user_{recipient_id}")
+            socketio.emit('new_message', msg_dict, to=f"user_{sender_id}")
+
+            sender_profile = new_msg.sender.profile if new_msg.sender else None
+            sender_name = f"{sender_profile.first_name} {sender_profile.last_name}".strip() if sender_profile else "Someone"
+            socketio.emit('message_notification', {
+                'sender_id': sender_id,
+                'sender_name': sender_name or "Someone",
+                'content': content[:50] + ('...' if len(content) > 50 else ''),
+                'conversation_id': conversation_id,
+            }, to=f"user_{recipient_id}")
+        except Exception:
+            pass
+
+        return api_success(data={'message': msg_dict}, status_code=201)
     except Exception as e:
         db.session.rollback()
         return api_error(f"Failed to send message: {str(e)}", 500)

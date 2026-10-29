@@ -131,7 +131,7 @@ export const AlumniDetailPage = () => {
 
           <div className="flex sm:flex-col gap-2 shrink-0">
             <Link
-              to={`/messages?partnerId=${alumnus.id}`}
+              to={`/messages/${alumnus.id}`}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-sm"
             >
               <MessageSquare className="w-4 h-4" />
@@ -152,7 +152,12 @@ export const AlumniDetailPage = () => {
         <div className="pt-2">
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Professional Skills</h3>
           <div className="flex flex-wrap gap-2">
-            {p.skills?.map((skill, idx) => (
+            {(Array.isArray(p.skills)
+              ? p.skills
+              : typeof p.skills === 'string'
+                ? p.skills.split(',').map((s) => s.trim())
+                : []
+            ).map((skill, idx) => (
               <span key={idx} className="px-3 py-1 bg-slate-100 text-slate-800 rounded-lg text-xs font-semibold">
                 {skill}
               </span>

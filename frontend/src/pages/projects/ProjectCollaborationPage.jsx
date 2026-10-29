@@ -252,11 +252,18 @@ export default function ProjectCollaborationPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((proj) => {
             const isCreator = proj.creator_id === user?.id
-            const skillsList = proj.required_skills
-              ? proj.required_skills.split(',').map((s) => s.trim()).filter(Boolean)
+            const rawSkills = proj.skills_needed || proj.required_skills
+            const skillsList = Array.isArray(rawSkills)
+              ? rawSkills
+              : rawSkills
+              ? String(rawSkills).split(',').map((s) => s.trim()).filter(Boolean)
               : []
-            const rolesList = proj.open_roles
-              ? proj.open_roles.split(',').map((r) => r.trim()).filter(Boolean)
+
+            const rawRoles = proj.roles_needed || proj.open_roles
+            const rolesList = Array.isArray(rawRoles)
+              ? rawRoles
+              : rawRoles
+              ? String(rawRoles).split(',').map((r) => r.trim()).filter(Boolean)
               : []
 
             return (

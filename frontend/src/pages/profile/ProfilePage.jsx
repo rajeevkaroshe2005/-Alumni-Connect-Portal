@@ -76,7 +76,11 @@ export default function ProfilePage() {
           linkedin_url: p.linkedin_url || '',
           github_url: p.github_url || '',
           portfolio_url: p.portfolio_url || '',
-          skills: p.skills ? p.skills.split(',').map((s) => s.trim()).filter(Boolean) : []
+          skills: Array.isArray(p.skills)
+            ? p.skills
+            : p.skills
+              ? String(p.skills).split(',').map((s) => s.trim()).filter(Boolean)
+              : []
         });
 
         if (u.student_detail) {

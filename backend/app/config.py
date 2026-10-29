@@ -21,7 +21,9 @@ class Config:
     DB_NAME = os.getenv('DB_NAME', 'alumni_portal')
 
     SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
+        os.getenv('DATABASE_URL')
+        or os.getenv('SQLALCHEMY_DATABASE_URI')
+        or f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {

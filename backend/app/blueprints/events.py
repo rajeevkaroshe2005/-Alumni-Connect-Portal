@@ -155,13 +155,18 @@ def toggle_rsvp(event_id):
     existing_rsvp = EventRSVP.query.filter_by(event_id=evt.id, user_id=user_id).first()
 
     try:
+        active_count = EventRSVP.query.filter(
+            EventRSVP.event_id == evt.id,
+            EventRSVP.status.in_(['REGISTERED', 'ATTENDED'])
+        ).count()
+
         if existing_rsvp:
             if existing_rsvp.status in ['REGISTERED', 'ATTENDED']:
                 existing_rsvp.status = 'CANCELLED'
                 db.session.commit()
                 return api_success(data={'is_registered': False}, message="RSVP registration cancelled.")
             else:
-                if len(evt.rsvps) >= evt.capacity:
+                if active_count >= evt.capacity:
                     return api_error("This event has reached full capacity.", 400)
                 existing_rsvp.status = 'REGISTERED'
                 if not existing_rsvp.checkin_token:
@@ -172,7 +177,7 @@ def toggle_rsvp(event_id):
                     message="Successfully registered for the event!"
                 )
         else:
-            if len(evt.rsvps) >= evt.capacity:
+            if active_count >= evt.capacity:
                 return api_error("This event has reached full capacity.", 400)
 
             token = uuid.uuid4().hex[:12].upper()
@@ -204,7 +209,7 @@ def checkin_attendee(event_id):
         return api_error("Event not found.", 404)
 
     data = request.get_json() or {}
-    token = data.get('checkin_token', '').strip().upper()
+    token = (data.get('checkin_token') or data.get('token') or '').strip().upper()
     attendee_id = data.get('attendee_id')
 
     q = EventRSVP.query.filter_by(event_id=evt.id)

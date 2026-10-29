@@ -2,7 +2,7 @@ import datetime
 from flask import Blueprint, request
 from sqlalchemy import or_, and_
 from .. import db
-from ..models import User, MentorProfile, MentorAvailabilitySlot, MentorshipBooking, Notification
+from ..models import User, Profile, AlumniDetail, MentorProfile, MentorAvailabilitySlot, MentorshipBooking, Notification
 from ..utils.response import api_success, api_error
 from ..utils.decorators import jwt_required, roles_required
 from ..services.audit_service import AuditService
@@ -28,15 +28,13 @@ def list_mentors():
         q = q.filter(MentorProfile.expertise_areas.ilike(f"%{expertise}%"))
 
     if query_str:
-        q = q.join(User.profile).filter(
+        q = q.outerjoin(Profile, User.id == Profile.user_id).filter(
             or_(
                 MentorProfile.bio.ilike(f"%{query_str}%"),
                 MentorProfile.expertise_areas.ilike(f"%{query_str}%"),
-                User.profile.has(or_(
-                    User.profile.property.mapper.class_.first_name.ilike(f"%{query_str}%"),
-                    User.profile.property.mapper.class_.last_name.ilike(f"%{query_str}%"),
-                    User.profile.property.mapper.class_.headline.ilike(f"%{query_str}%"),
-                ))
+                Profile.first_name.ilike(f"%{query_str}%"),
+                Profile.last_name.ilike(f"%{query_str}%"),
+                Profile.headline.ilike(f"%{query_str}%"),
             )
         )
 

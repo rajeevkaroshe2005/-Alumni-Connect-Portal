@@ -375,7 +375,11 @@ def get_network_graph():
 
     user_profile = user.profile
     user_name = f"{user_profile.first_name} {user_profile.last_name}" if user_profile else "You"
-    user_dept = user.student_detail.department if user.student_detail else ""
+    user_dept = ""
+    if user.student_detail and user.student_detail.department:
+        user_dept = user.student_detail.department
+    elif user.alumni_detail and user.alumni_detail.department:
+        user_dept = user.alumni_detail.department
 
     # Fetch all alumni
     alumni_users = User.query.filter_by(role='ALUMNI', is_active=True).limit(25).all()
