@@ -39,12 +39,37 @@
 }
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   body {
     background-color: #F5F1E8 !important; /* Warm cream */
     color: #333333 !important;           /* Charcoal */
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     margin: 0;
     padding: 0;
+    cursor: default;
+  }
+
+  /* Keep mouse arrow cursor over headings, labels, cards, badges, and layout */
+  h1, h2, h3, h4, h5, h6,
+  nav, header, footer,
+  label, badge,
+  table, tr, th, td {
+    cursor: default;
+  }
+
+  /* Clear hand pointer cursor for all interactive elements */
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"],
+  summary {
+    cursor: pointer !important;
   }
 
   /* Universal high-contrast text on all form controls */
@@ -54,6 +79,7 @@
     color: #333333 !important;
     background-color: #FFFFFF !important;
     border-color: #D8D2C4;
+    cursor: text !important;
   }
 
   /* Crisp placeholder text */
