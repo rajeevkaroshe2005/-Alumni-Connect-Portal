@@ -1,4 +1,5 @@
 from flask import Blueprint, request
+from .. import db
 from ..models import User, Job
 from ..services.ai_service import AIService
 from ..utils.response import api_success, api_error
@@ -11,7 +12,7 @@ ai_bp = Blueprint('ai', __name__)
 @roles_required('STUDENT')
 def get_recommended_mentors():
     """AI content-based mentor recommendations for logged-in student."""
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -30,7 +31,7 @@ def get_recommended_mentors():
 @roles_required('STUDENT')
 def get_recommended_jobs():
     """AI job recommendations matching student profile and skills."""
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -87,12 +88,12 @@ def perform_skill_gap_analysis():
     if not job_id:
         return api_error("Target job_id is required.", 400)
 
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job:
         return api_error("Target job not found.", 404)
 
     if not skills and request.user_id:
-        user = User.query.get(request.user_id)
+        user = db.session.get(User, request.user_id)
         if user and user.profile:
             skills = user.profile.get_skills_list()
 
@@ -142,9 +143,9 @@ def generate_smart_referral_pitch():
     if not alumnus_id or not job_id:
         return api_error("alumnus_id and job_id are required.", 400)
 
-    student_user = User.query.get(request.user_id)
-    alumnus_user = User.query.get(alumnus_id)
-    job = Job.query.get(job_id)
+    student_user = db.session.get(User, request.user_id)
+    alumnus_user = db.session.get(User, alumnus_id)
+    job = db.session.get(Job, job_id)
 
     if not student_user or not alumnus_user or not job:
         return api_error("Target user or job opening not found.", 404)
@@ -217,7 +218,7 @@ def scan_resume_ats_endpoint():
         return api_error("No resume content provided. Please upload a PDF/TXT resume or provide resume_text.", 400)
 
     if job_id:
-        job = Job.query.get(job_id)
+        job = db.session.get(Job, job_id)
         if job:
             target_job_title = job.title
             target_job_description = job.description
@@ -248,7 +249,7 @@ def predict_career_endpoint():
     company_tier = data.get('company_tier', 'TIER_1_PRODUCT')
 
     if not skills and request.user_id:
-        user = User.query.get(request.user_id)
+        user = db.session.get(User, request.user_id)
         if user and user.profile:
             skills = user.profile.get_skills_list()
 
@@ -280,8 +281,8 @@ def generate_outreach_endpoint():
     if not alumnus_id:
         return api_error("alumnus_id is required.", 400)
 
-    student_user = User.query.get(request.user_id)
-    alumnus_user = User.query.get(alumnus_id)
+    student_user = db.session.get(User, request.user_id)
+    alumnus_user = db.session.get(User, alumnus_id)
 
     if not student_user or not alumnus_user:
         return api_error("Student or Alumnus user not found.", 404)
@@ -308,7 +309,7 @@ def get_opportunity_alerts():
     Generate proactive opportunity alerts for student when high-match
     jobs or alumni mentors (> 70% match) are detected by the TF-IDF engine.
     """
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -369,7 +370,7 @@ def get_network_graph():
     - 1st-degree connections (booked mentors or same department)
     - 2nd-degree connections (alumni at same company reachable via peers)
     """
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user:
         return api_error("User not found.", 404)
 

@@ -1,6 +1,8 @@
 import datetime
+import time
 from flask import Blueprint, request
 from sqlalchemy import or_, func
+from sqlalchemy.orm import joinedload
 from .. import db
 from ..models import User, Profile, AlumniDetail, Job, MentorshipBooking, Event, AuditLog, Notification
 from ..utils.response import api_success, api_error
@@ -10,10 +12,17 @@ from ..services.audit_service import AuditService
 admin_bp = Blueprint('admin', __name__)
 
 
+_ANALYTICS_CACHE = {'timestamp': 0, 'data': None}
+
+
 @admin_bp.route('/analytics', methods=['GET'])
 @roles_required('ADMIN')
 def get_platform_analytics():
-    """Aggregate statistics for executive administrative dashboard."""
+    """Aggregate statistics for executive administrative dashboard with TTL caching."""
+    global _ANALYTICS_CACHE
+    now = time.time()
+    if _ANALYTICS_CACHE['data'] and (now - _ANALYTICS_CACHE['timestamp']) < 60:
+        return api_success(data=_ANALYTICS_CACHE['data'])
     total_users = User.query.count()
     total_students = User.query.filter_by(role='STUDENT').count()
     total_alumni = User.query.filter_by(role='ALUMNI').count()
@@ -39,34 +48,34 @@ def get_platform_analytics():
         AlumniDetail.department, func.count(AlumniDetail.id)
     ).group_by(AlumniDetail.department).all()
 
-    return api_success(
-        data={
-            'users': {
-                'total': total_users,
-                'students': total_students,
-                'alumni': total_alumni,
-                'verified_alumni': verified_alumni,
-                'pending_verifications': pending_verifications,
-            },
-            'jobs': {
-                'total': total_jobs,
-                'active': active_jobs,
-                'pending_moderation': pending_jobs,
-            },
-            'mentorship': {
-                'total_bookings': total_mentorships,
-                'confirmed': confirmed_mentorships,
-                'completed': completed_mentorships,
-            },
-            'events': {
-                'total': total_events,
-                'upcoming': upcoming_events,
-            },
-            'departments': [
-                {'name': dept or 'Other', 'count': count} for dept, count in dept_distribution
-            ],
-        }
-    )
+    analytics_data = {
+        'users': {
+            'total': total_users,
+            'students': total_students,
+            'alumni': total_alumni,
+            'verified_alumni': verified_alumni,
+            'pending_verifications': pending_verifications,
+        },
+        'jobs': {
+            'total': total_jobs,
+            'active': active_jobs,
+            'pending_moderation': pending_jobs,
+        },
+        'mentorship': {
+            'total_bookings': total_mentorships,
+            'confirmed': confirmed_mentorships,
+            'completed': completed_mentorships,
+        },
+        'events': {
+            'total': total_events,
+            'upcoming': upcoming_events,
+        },
+        'departments': [
+            {'name': dept or 'Other', 'count': count} for dept, count in dept_distribution
+        ],
+    }
+    _ANALYTICS_CACHE = {'timestamp': now, 'data': analytics_data}
+    return api_success(data=analytics_data)
 
 
 @admin_bp.route('/users', methods=['GET'])
@@ -92,7 +101,11 @@ def list_users():
             )
         )
 
-    q = q.order_by(User.created_at.desc())
+    q = q.options(
+        joinedload(User.profile),
+        joinedload(User.alumni_detail),
+        joinedload(User.student_detail),
+    ).order_by(User.created_at.desc())
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
     return api_success(
@@ -115,7 +128,7 @@ def toggle_user_status(user_id):
     if user_id == request.user_id:
         return api_error("Administrators cannot deactivate their own account.", 400)
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -232,7 +245,7 @@ def get_jobs_for_moderation():
 @roles_required('ADMIN')
 def moderate_job(job_id):
     """Approve or reject job posting."""
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job:
         return api_error("Job not found.", 404)
 

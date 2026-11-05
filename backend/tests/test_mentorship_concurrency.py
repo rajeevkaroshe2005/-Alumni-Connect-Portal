@@ -1,4 +1,5 @@
 import datetime
+from app import db
 from app.models import MentorshipBooking, MentorAvailabilitySlot
 
 
@@ -26,7 +27,7 @@ def test_mentorship_slot_booking_and_double_booking_prevention(client, seeded_us
     assert data['data']['booking']['status'] == 'PENDING'
 
     # Slot must now be marked booked
-    slot_refreshed = MentorAvailabilitySlot.query.get(slot.id)
+    slot_refreshed = db.session.get(MentorAvailabilitySlot, slot.id)
     assert slot_refreshed.is_booked is True
 
     # Immediate second attempt to book the exact same slot must be rejected with 409

@@ -1,6 +1,7 @@
 import datetime
 import uuid
 from flask import Blueprint, request
+from sqlalchemy.orm import selectinload
 from .. import db
 from ..models import User, DonationCampaign, DonationTransaction
 from ..utils.response import api_success, api_error
@@ -14,7 +15,9 @@ donations_bp = Blueprint('donations', __name__)
 @jwt_required
 def get_campaigns():
     """List active university donation and alumni giving campaigns."""
-    campaigns = DonationCampaign.query.filter_by(is_active=True).order_by(DonationCampaign.created_at.desc()).all()
+    campaigns = DonationCampaign.query.options(
+        selectinload(DonationCampaign.donations)
+    ).filter_by(is_active=True).order_by(DonationCampaign.created_at.desc()).all()
     return api_success(data={'campaigns': [c.to_dict() for c in campaigns]})
 
 
@@ -65,7 +68,7 @@ def pledge_donation():
     if not campaign_id or not amount or float(amount) <= 0:
         return api_error("Valid campaign_id and positive amount are required.", 400)
 
-    campaign = DonationCampaign.query.get(campaign_id)
+    campaign = db.session.get(DonationCampaign, campaign_id)
     if not campaign or not campaign.is_active:
         return api_error("Campaign is not available for donations.", 404)
 
@@ -110,7 +113,7 @@ def pledge_donation():
 @jwt_required
 def get_campaign_donors(campaign_id):
     """Retrieve donor roll of honor for a campaign."""
-    campaign = DonationCampaign.query.get(campaign_id)
+    campaign = db.session.get(DonationCampaign, campaign_id)
     if not campaign:
         return api_error("Campaign not found.", 404)
 

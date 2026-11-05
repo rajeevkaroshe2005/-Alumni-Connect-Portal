@@ -1,5 +1,7 @@
+import time
 from flask import Blueprint, request
 from sqlalchemy import or_, distinct
+from sqlalchemy.orm import joinedload
 from .. import db
 from ..models import User, Profile, AlumniDetail
 from ..utils.response import api_success, api_error
@@ -61,7 +63,10 @@ def search_alumni():
         )
 
     # Order by verified status first, then newest
-    q = q.order_by(
+    q = q.options(
+        joinedload(User.profile),
+        joinedload(User.alumni_detail),
+    ).order_by(
         (AlumniDetail.verification_status == 'VERIFIED').desc(),
         User.id.desc(),
     )
@@ -96,10 +101,19 @@ def get_alumni_detail(alumni_id):
     return api_success(data={'alumnus': user.to_dict()})
 
 
+# In-memory cache for filter options (120s TTL)
+_FILTER_CACHE = {'timestamp': 0, 'data': None}
+
+
 @alumni_bp.route('/filters', methods=['GET'])
 @jwt_required
 def get_filter_options():
-    """Retrieve distinct departments, companies, industries, and years for filter UI."""
+    """Retrieve distinct departments, companies, industries, and years for filter UI with TTL caching."""
+    global _FILTER_CACHE
+    now = time.time()
+    if _FILTER_CACHE['data'] and (now - _FILTER_CACHE['timestamp']) < 120:
+        return api_success(data=_FILTER_CACHE['data'])
+
     departments = [
         d[0] for d in db.session.query(distinct(AlumniDetail.department)).filter(AlumniDetail.department != None).all() if d[0]
     ]
@@ -113,11 +127,11 @@ def get_filter_options():
         y[0] for y in db.session.query(distinct(AlumniDetail.graduation_year)).filter(AlumniDetail.graduation_year != None).order_by(AlumniDetail.graduation_year.desc()).all() if y[0]
     ]
 
-    return api_success(
-        data={
-            'departments': sorted(departments),
-            'companies': sorted(companies),
-            'industries': sorted(industries),
-            'graduation_years': sorted(years, reverse=True),
-        }
-    )
+    result = {
+        'departments': sorted(departments),
+        'companies': sorted(companies),
+        'industries': sorted(industries),
+        'graduation_years': sorted(years, reverse=True),
+    }
+    _FILTER_CACHE = {'timestamp': now, 'data': result}
+    return api_success(data=result)

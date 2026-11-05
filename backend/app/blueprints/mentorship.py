@@ -1,6 +1,7 @@
 import datetime
 from flask import Blueprint, request
 from sqlalchemy import or_, and_
+from sqlalchemy.orm import joinedload
 from .. import db
 from ..models import User, Profile, AlumniDetail, MentorProfile, MentorAvailabilitySlot, MentorshipBooking, Notification
 from ..utils.response import api_success, api_error
@@ -38,6 +39,10 @@ def list_mentors():
             )
         )
 
+    q = q.options(
+        joinedload(MentorProfile.user).joinedload(User.profile),
+        joinedload(MentorProfile.user).joinedload(User.alumni_detail),
+    )
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
     return api_success(
@@ -133,7 +138,7 @@ def create_availability_slots():
 @roles_required('ALUMNI', 'ADMIN')
 def delete_availability_slot(slot_id):
     """Delete an unbooked availability slot."""
-    slot = MentorAvailabilitySlot.query.get(slot_id)
+    slot = db.session.get(MentorAvailabilitySlot, slot_id)
     if not slot:
         return api_error("Slot not found.", 404)
 
@@ -235,7 +240,7 @@ def book_mentorship_session():
             db.session.flush()
 
             # Create notification for mentor
-            student_user = User.query.get(student_id)
+            student_user = db.session.get(User, student_id)
             student_name = f"{student_user.profile.first_name} {student_user.profile.last_name}" if student_user.profile else "A student"
             notif = Notification(
                 user_id=mentor_id,
@@ -271,7 +276,7 @@ def book_mentorship_session():
 @jwt_required
 def handle_booking_decision(booking_id):
     """Mentor accepts or declines a mentorship booking."""
-    booking = MentorshipBooking.query.get(booking_id)
+    booking = db.session.get(MentorshipBooking, booking_id)
     if not booking:
         return api_error("Booking not found.", 404)
 
@@ -325,7 +330,7 @@ def handle_booking_decision(booking_id):
 @roles_required('STUDENT')
 def submit_feedback(booking_id):
     """Student provides rating and feedback post-session."""
-    booking = MentorshipBooking.query.get(booking_id)
+    booking = db.session.get(MentorshipBooking, booking_id)
     if not booking:
         return api_error("Booking not found.", 404)
 
@@ -377,7 +382,7 @@ def save_session_summary(booking_id):
     """
     from ..models.mentorship_summary import MentorshipSessionSummary
 
-    booking = MentorshipBooking.query.get(booking_id)
+    booking = db.session.get(MentorshipBooking, booking_id)
     if not booking:
         return api_error("Booking not found.", 404)
 
@@ -460,7 +465,7 @@ def get_session_summary(booking_id):
     """Retrieve session summary, action items, and follow-up timeline."""
     from ..models.mentorship_summary import MentorshipSessionSummary
 
-    booking = MentorshipBooking.query.get(booking_id)
+    booking = db.session.get(MentorshipBooking, booking_id)
     if not booking:
         return api_error("Booking not found.", 404)
 

@@ -4,12 +4,13 @@ from ..models import User, Profile, StudentDetail, AlumniDetail, MentorProfile
 from ..services.auth_service import AuthService
 from ..services.audit_service import AuditService
 from ..utils.response import api_success, api_error
-from ..utils.decorators import jwt_required
+from ..utils.decorators import jwt_required, rate_limit
 
 auth_bp = Blueprint('auth', __name__)
 
 
 @auth_bp.route('/register', methods=['POST'])
+@rate_limit(max_requests=30, window_seconds=60)
 def register():
     """Register a new student or alumni account."""
     data = request.get_json() or {}
@@ -133,6 +134,7 @@ def register():
 
 
 @auth_bp.route('/login', methods=['POST'])
+@rate_limit(max_requests=60, window_seconds=60)
 def login():
     """Authenticate user with email and password, returning JWT token."""
     data = request.get_json() or {}
@@ -179,7 +181,7 @@ def login():
 @jwt_required
 def get_current_user():
     """Retrieve details of the authenticated user."""
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -200,7 +202,7 @@ def change_password():
     if len(new_password) < 6:
         return api_error("New password must be at least 6 characters long.", 400)
 
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user or not AuthService.verify_password(current_password, user.password_hash):
         return api_error("Incorrect current password.", 400)
 

@@ -12,7 +12,7 @@ profiles_bp = Blueprint('profiles', __name__)
 @jwt_required
 def get_user_profile(user_id):
     """Retrieve full public profile of a user by ID."""
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -24,7 +24,7 @@ def get_user_profile(user_id):
 def update_my_profile():
     """Update profile attributes of the authenticated user."""
     data = request.get_json() or {}
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user:
         return api_error("User not found.", 404)
 
@@ -79,7 +79,7 @@ def update_my_profile():
 @jwt_required
 def update_student_details():
     """Update student-specific educational details."""
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user or user.role != 'STUDENT':
         return api_error("Only students can update student details.", 403)
 
@@ -119,7 +119,7 @@ def update_student_details():
 @jwt_required
 def update_alumni_details():
     """Update alumni employment and industry details."""
-    user = User.query.get(request.user_id)
+    user = db.session.get(User, request.user_id)
     if not user or user.role != 'ALUMNI':
         return api_error("Only alumni can update alumni details.", 403)
 

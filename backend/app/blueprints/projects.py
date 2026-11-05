@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import User, CollaborationProject, ProjectApplication
 from ..utils.response import api_success, api_error
@@ -39,7 +40,10 @@ def get_projects():
             )
         )
 
-    q = q.order_by(CollaborationProject.created_at.desc())
+    q = q.options(
+        joinedload(CollaborationProject.creator).joinedload(User.profile),
+        selectinload(CollaborationProject.applications),
+    ).order_by(CollaborationProject.created_at.desc())
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
     user_id = request.user_id
@@ -66,7 +70,7 @@ def get_projects():
 @jwt_required
 def get_project_detail(project_id):
     """Get project details, creator information, and team applicants."""
-    project = CollaborationProject.query.get(project_id)
+    project = db.session.get(CollaborationProject, project_id)
     if not project:
         return api_error("Project not found.", 404)
 
@@ -143,7 +147,7 @@ def create_project():
 @jwt_required
 def apply_to_project(project_id):
     """Apply to join a collaboration project team."""
-    project = CollaborationProject.query.get(project_id)
+    project = db.session.get(CollaborationProject, project_id)
     if not project or project.status != 'OPEN':
         return api_error("This project is not currently accepting applications.", 400)
 
@@ -187,7 +191,7 @@ def apply_to_project(project_id):
 @jwt_required
 def review_project_application(app_id):
     """Accept or reject an applicant (Project creator or Admin only)."""
-    application = ProjectApplication.query.get(app_id)
+    application = db.session.get(ProjectApplication, app_id)
     if not application:
         return api_error("Application not found.", 404)
 

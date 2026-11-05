@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import Job, JobApplication, SavedJob, User, Notification
 from ..utils.response import api_success, api_error
@@ -39,7 +40,10 @@ def get_jobs():
             )
         )
 
-    q = q.order_by(Job.created_at.desc())
+    q = q.options(
+        joinedload(Job.poster).joinedload(User.profile),
+        selectinload(Job.applications),
+    ).order_by(Job.created_at.desc())
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
     # Check which jobs are saved or applied to by current user
@@ -77,7 +81,7 @@ def get_jobs():
 @jwt_required
 def get_job_detail(job_id):
     """Retrieve full job details."""
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job:
         return api_error("Job listing not found.", 404)
 
@@ -109,7 +113,7 @@ def create_job():
         skills_required = ', '.join(skills_required)
 
     user_id = request.user_id
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     # If alumni is not verified, set moderation_status to PENDING
     moderation_status = 'APPROVED'
@@ -155,7 +159,7 @@ def create_job():
 @jwt_required
 def update_job(job_id):
     """Edit existing job listing (owner or admin)."""
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job:
         return api_error("Job not found.", 404)
 
@@ -199,7 +203,7 @@ def update_job(job_id):
 @roles_required('STUDENT')
 def apply_to_job(job_id):
     """Apply to a job listing with a resume reference and cover note."""
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job or not job.is_active or job.moderation_status != 'APPROVED':
         return api_error("This job is not currently open for applications.", 400)
 
@@ -252,7 +256,7 @@ def apply_to_job(job_id):
 @jwt_required
 def get_job_applications(job_id):
     """View applications for a specific job (poster or admin only)."""
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job:
         return api_error("Job not found.", 404)
 
@@ -267,7 +271,7 @@ def get_job_applications(job_id):
 @jwt_required
 def update_application_status(app_id):
     """Update applicant status (e.g., SHORTLISTED, REJECTED, ACCEPTED) and notify candidate."""
-    app_record = JobApplication.query.get(app_id)
+    app_record = db.session.get(JobApplication, app_id)
     if not app_record:
         return api_error("Application record not found.", 404)
 
@@ -313,7 +317,7 @@ def update_application_status(app_id):
 @jwt_required
 def toggle_save_job(job_id):
     """Bookmark or remove bookmark for a job."""
-    job = Job.query.get(job_id)
+    job = db.session.get(Job, job_id)
     if not job:
         return api_error("Job not found.", 404)
 

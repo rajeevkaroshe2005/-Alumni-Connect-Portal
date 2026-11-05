@@ -30,7 +30,7 @@ def get_user_conversations():
             continue
         seen_partners.add(partner_id)
 
-        partner = User.query.get(partner_id)
+        partner = db.session.get(User, partner_id)
         if not partner:
             continue
 
@@ -96,7 +96,7 @@ def send_message_api():
     if sender_id == recipient_id:
         return api_error("Cannot send messages to yourself.", 400)
 
-    recipient = User.query.get(recipient_id)
+    recipient = db.session.get(User, recipient_id)
     if not recipient:
         return api_error("Recipient user not found.", 404)
 

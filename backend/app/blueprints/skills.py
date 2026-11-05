@@ -31,11 +31,11 @@ def endorse_student_skill():
     if endorser_id == student_id:
         return api_error("You cannot endorse your own skills.", 400)
 
-    student = User.query.get(student_id)
+    student = db.session.get(User, student_id)
     if not student:
         return api_error("Student user not found.", 404)
 
-    endorser = User.query.get(endorser_id)
+    endorser = db.session.get(User, endorser_id)
 
     # Relationship Verification Safeguard (Admin bypasses)
     if endorser.role != 'ADMIN':
@@ -131,12 +131,12 @@ def get_student_endorsements(student_id):
 @jwt_required
 def delete_endorsement(endorsement_id):
     """Delete an endorsement by endorser or by student."""
-    endorsement = SkillEndorsement.query.get(endorsement_id)
+    endorsement = db.session.get(SkillEndorsement, endorsement_id)
     if not endorsement:
         return api_error("Endorsement record not found.", 404)
 
     user_id = request.user_id
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
 
     if endorsement.endorser_id != user_id and endorsement.student_id != user_id and user.role != 'ADMIN':
         return api_error("You do not have permission to remove this endorsement.", 403)

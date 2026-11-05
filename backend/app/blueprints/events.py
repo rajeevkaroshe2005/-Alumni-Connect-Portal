@@ -2,6 +2,7 @@ import datetime
 import uuid
 from flask import Blueprint, request
 from sqlalchemy import or_, func
+from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import Event, EventRSVP, User
 from ..models.event_feedback import EventFeedback
@@ -35,7 +36,10 @@ def get_events():
             )
         )
 
-    q = q.order_by(Event.start_time.asc())
+    q = q.options(
+        joinedload(Event.organizer).joinedload(User.profile),
+        selectinload(Event.rsvps),
+    ).order_by(Event.start_time.asc())
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
     user_id = request.user_id
@@ -64,7 +68,7 @@ def get_events():
 @jwt_required
 def get_event_detail(event_id):
     """Get single event with registration state for current user."""
-    evt = Event.query.get(event_id)
+    evt = db.session.get(Event, event_id)
     if not evt:
         return api_error("Event not found.", 404)
 
@@ -147,7 +151,7 @@ def create_event():
 @jwt_required
 def toggle_rsvp(event_id):
     """Register or cancel RSVP attendance with digital check-in token."""
-    evt = Event.query.get(event_id)
+    evt = db.session.get(Event, event_id)
     if not evt or evt.is_cancelled:
         return api_error("Event is not available for RSVP.", 400)
 
@@ -204,7 +208,7 @@ def toggle_rsvp(event_id):
 @jwt_required
 def checkin_attendee(event_id):
     """Verify attendee digital QR token or mark check-in by organizer."""
-    evt = Event.query.get(event_id)
+    evt = db.session.get(Event, event_id)
     if not evt:
         return api_error("Event not found.", 404)
 
@@ -238,7 +242,7 @@ def checkin_attendee(event_id):
 @jwt_required
 def submit_event_feedback(event_id):
     """Submit post-event 1-5 star rating and review."""
-    evt = Event.query.get(event_id)
+    evt = db.session.get(Event, event_id)
     if not evt:
         return api_error("Event not found.", 404)
 
@@ -266,7 +270,7 @@ def submit_event_feedback(event_id):
 @jwt_required
 def get_event_feedbacks(event_id):
     """List feedbacks and aggregated rating for an event."""
-    evt = Event.query.get(event_id)
+    evt = db.session.get(Event, event_id)
     if not evt:
         return api_error("Event not found.", 404)
 
@@ -284,7 +288,7 @@ def get_event_feedbacks(event_id):
 @jwt_required
 def get_attendees(event_id):
     """List registered attendees for an event with attendance status."""
-    evt = Event.query.get(event_id)
+    evt = db.session.get(Event, event_id)
     if not evt:
         return api_error("Event not found.", 404)
 

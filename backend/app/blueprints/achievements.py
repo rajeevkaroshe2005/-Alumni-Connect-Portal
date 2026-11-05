@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from sqlalchemy import or_
+from sqlalchemy.orm import joinedload, selectinload
 from .. import db
 from ..models import User, AlumniAchievement, AchievementCheer
 from ..utils.response import api_success, api_error
@@ -22,7 +23,11 @@ def get_achievements():
     if category:
         q = q.filter(AlumniAchievement.category == category)
 
-    q = q.order_by(AlumniAchievement.created_at.desc())
+    q = q.options(
+        joinedload(AlumniAchievement.alumnus).joinedload(User.profile),
+        joinedload(AlumniAchievement.alumnus).joinedload(User.alumni_detail),
+        selectinload(AlumniAchievement.cheers),
+    ).order_by(AlumniAchievement.created_at.desc())
     pagination = q.paginate(page=page, per_page=per_page, error_out=False)
 
     user_id = request.user_id
@@ -88,7 +93,7 @@ def post_achievement():
 @jwt_required
 def toggle_cheer(achievement_id):
     """Toggle a campus cheer/applaud for an achievement."""
-    achievement = AlumniAchievement.query.get(achievement_id)
+    achievement = db.session.get(AlumniAchievement, achievement_id)
     if not achievement:
         return api_error("Achievement not found.", 404)
 
@@ -113,7 +118,7 @@ def toggle_cheer(achievement_id):
 @roles_required('ADMIN')
 def moderate_achievement(achievement_id):
     """Admin moderate / approve or hide an achievement."""
-    achievement = AlumniAchievement.query.get(achievement_id)
+    achievement = db.session.get(AlumniAchievement, achievement_id)
     if not achievement:
         return api_error("Achievement not found.", 404)
 
