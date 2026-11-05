@@ -88,6 +88,25 @@ def create_app(config_name=None):
     def handle_server_error(e):
         return api_error("An internal error occurred. Please try again later.", 500)
 
+    @app.route('/')
+    def root_index():
+        return jsonify({
+            "status": "online",
+            "service": "Alumni Connect Portal Backend API",
+            "message": "Backend API is running successfully! Open http://localhost:5173 for the frontend website interface.",
+            "frontend_url": "http://localhost:5173",
+            "api_prefix": "/api"
+        }), 200
+
+    @app.route('/api')
+    @app.route('/api/health')
+    def api_health():
+        return jsonify({
+            "status": "healthy",
+            "service": "Alumni Connect Portal API",
+            "version": "1.0.0"
+        }), 200
+
     # Register blueprints under /api and /api/v1 versioned prefixes
     from .blueprints.auth import auth_bp
     from .blueprints.profiles import profiles_bp
