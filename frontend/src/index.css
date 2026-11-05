@@ -45,6 +45,14 @@
     box-sizing: border-box;
   }
 
+  /* Prevent browser caret cursor from entering headings, text, cards, and UI elements */
+  *:not(input):not(textarea):not([contenteditable="true"]) {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+  }
+
   body {
     background-color: #F5F1E8 !important; /* Warm cream */
     color: #333333 !important;           /* Charcoal */
