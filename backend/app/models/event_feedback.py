@@ -7,6 +7,7 @@ class EventFeedback(db.Model):
     __tablename__ = 'event_feedbacks'
     __table_args__ = (
         db.UniqueConstraint('event_id', 'user_id', name='uq_event_user_feedback'),
+        db.Index('ix_feedbacks_event_rating', 'event_id', 'rating'),
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

@@ -5,6 +5,9 @@ from .. import db
 class AlumniDetail(db.Model):
     """Alumni graduation, employment, and administrative verification details."""
     __tablename__ = 'alumni_details'
+    __table_args__ = (
+        db.Index('ix_alumni_verif_dept_year', 'verification_status', 'department', 'graduation_year'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), unique=True, nullable=False, index=True)

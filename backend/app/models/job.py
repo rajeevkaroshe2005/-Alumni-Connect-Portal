@@ -5,6 +5,9 @@ from .. import db
 class Job(db.Model):
     """Job and internship listing entity."""
     __tablename__ = 'jobs'
+    __table_args__ = (
+        db.Index('ix_jobs_active_mod_created', 'is_active', 'moderation_status', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     posted_by_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

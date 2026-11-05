@@ -10,6 +10,7 @@ class SkillEndorsement(db.Model):
     __tablename__ = 'skill_endorsements'
     __table_args__ = (
         db.UniqueConstraint('student_id', 'endorser_id', 'skill_name', name='uq_student_endorser_skill'),
+        db.Index('ix_endorsements_student_skill', 'student_id', 'skill_name'),
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

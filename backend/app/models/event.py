@@ -5,6 +5,9 @@ from .. import db
 class Event(db.Model):
     """Alumni events, webinars, workshops, and campus reunions."""
     __tablename__ = 'events'
+    __table_args__ = (
+        db.Index('ix_events_active_start', 'moderation_status', 'is_cancelled', 'start_time'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     organizer_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

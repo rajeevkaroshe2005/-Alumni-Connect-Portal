@@ -5,6 +5,9 @@ from .. import db
 class DonationCampaign(db.Model):
     """Institutional crowdfunding campaigns for research, labs, and student aid."""
     __tablename__ = 'donation_campaigns'
+    __table_args__ = (
+        db.Index('ix_donations_active_created', 'is_active', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(150), nullable=False)

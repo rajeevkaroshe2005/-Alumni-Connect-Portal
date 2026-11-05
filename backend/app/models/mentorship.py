@@ -77,6 +77,10 @@ class MentorAvailabilitySlot(db.Model):
 class MentorshipBooking(db.Model):
     """Mentorship session bookings with transactional conflict prevention."""
     __tablename__ = 'mentorship_bookings'
+    __table_args__ = (
+        db.Index('ix_bookings_mentor_date_time', 'mentor_id', 'session_date', 'start_time'),
+        db.Index('ix_bookings_student_status', 'student_id', 'status'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     mentor_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

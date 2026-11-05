@@ -9,6 +9,9 @@ class CollaborationProject(db.Model):
     around real-world capstone projects, startups, or research ideas.
     """
     __tablename__ = 'collaboration_projects'
+    __table_args__ = (
+        db.Index('ix_projects_status_domain_created', 'status', 'domain', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     creator_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
@@ -77,6 +80,7 @@ class ProjectApplication(db.Model):
     __tablename__ = 'project_applications'
     __table_args__ = (
         db.UniqueConstraint('project_id', 'applicant_id', name='uq_project_applicant'),
+        db.Index('ix_proj_apps_status', 'project_id', 'status'),
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)

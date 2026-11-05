@@ -5,6 +5,9 @@ from .. import db
 class Notification(db.Model):
     """In-app notifications for bookings, applications, messages, and administrative updates."""
     __tablename__ = 'notifications'
+    __table_args__ = (
+        db.Index('ix_notifications_user_read_created', 'user_id', 'is_read', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

@@ -5,6 +5,10 @@ from .. import db
 class Message(db.Model):
     """Direct chat messages between authenticated users."""
     __tablename__ = 'messages'
+    __table_args__ = (
+        db.Index('ix_messages_conv_created', 'conversation_id', 'created_at'),
+        db.Index('ix_messages_recipient_unread', 'recipient_id', 'is_read'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

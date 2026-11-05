@@ -51,6 +51,43 @@ def create_app(config_name=None):
             'database': 'connected' if db.engine else 'unknown',
         }), 200
 
+    # Performance: API Response-Time tracking & latency metrics
+    import time
+    from .utils.response import api_error
+    from flask import g
+
+    @app.before_request
+    def record_request_start():
+        g._request_start_time = time.time()
+
+    @app.after_request
+    def attach_response_time(response):
+        if hasattr(g, '_request_start_time'):
+            elapsed_ms = (time.time() - g._request_start_time) * 1000
+            response.headers['X-Response-Time'] = f"{elapsed_ms:.2f}ms"
+        return response
+
+    # Centralized REST API Error Handlers
+    @app.errorhandler(400)
+    def handle_bad_request(e):
+        return api_error(str(e.description) if hasattr(e, 'description') else "Invalid request parameters.", 400)
+
+    @app.errorhandler(404)
+    def handle_not_found(e):
+        return api_error("The requested resource was not found.", 404)
+
+    @app.errorhandler(405)
+    def handle_method_not_allowed(e):
+        return api_error("HTTP method not allowed for this route.", 405)
+
+    @app.errorhandler(429)
+    def handle_rate_limited(e):
+        return api_error("Too many requests. Please wait a moment before trying again.", 429)
+
+    @app.errorhandler(500)
+    def handle_server_error(e):
+        return api_error("An internal error occurred. Please try again later.", 500)
+
     # Register blueprints under /api and /api/v1 versioned prefixes
     from .blueprints.auth import auth_bp
     from .blueprints.profiles import profiles_bp

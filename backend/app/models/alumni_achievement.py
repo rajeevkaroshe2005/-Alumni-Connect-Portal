@@ -8,6 +8,9 @@ class AlumniAchievement(db.Model):
     Promotions, Funding Rounds, Publications, Patents, and Honors with moderation.
     """
     __tablename__ = 'alumni_achievements'
+    __table_args__ = (
+        db.Index('ix_achievements_approved_created', 'is_approved', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     alumnus_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)

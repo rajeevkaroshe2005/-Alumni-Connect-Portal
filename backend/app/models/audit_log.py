@@ -5,6 +5,9 @@ from .. import db
 class AuditLog(db.Model):
     """Audit log records for tracking security and administrative actions."""
     __tablename__ = 'audit_logs'
+    __table_args__ = (
+        db.Index('ix_audit_logs_action_created', 'action', 'created_at'),
+    )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     actor_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='SET NULL'), nullable=True, index=True)

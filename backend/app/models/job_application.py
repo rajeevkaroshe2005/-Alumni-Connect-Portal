@@ -7,6 +7,7 @@ class JobApplication(db.Model):
     __tablename__ = 'job_applications'
     __table_args__ = (
         db.UniqueConstraint('job_id', 'applicant_id', name='uq_job_applicant'),
+        db.Index('ix_job_apps_job_status', 'job_id', 'status'),
     )
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
