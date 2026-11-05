@@ -12,56 +12,68 @@ import { AboutPage } from './pages/AboutPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { RegisterPage } from './pages/auth/RegisterPage'
 
-// Dashboards
-import { DashboardRouter } from './pages/dashboard/DashboardRouter'
+// Dashboards (Lazy Loaded)
+const DashboardRouter = React.lazy(() => import('./pages/dashboard/DashboardRouter').then(m => ({ default: m.DashboardRouter })))
 
-// Alumni Directory
-import { AlumniDirectoryPage } from './pages/alumni/AlumniDirectoryPage'
-import { AlumniDetailPage } from './pages/alumni/AlumniDetailPage'
+// Alumni Directory (Lazy Loaded)
+const AlumniDirectoryPage = React.lazy(() => import('./pages/alumni/AlumniDirectoryPage').then(m => ({ default: m.AlumniDirectoryPage })))
+const AlumniDetailPage = React.lazy(() => import('./pages/alumni/AlumniDetailPage').then(m => ({ default: m.AlumniDetailPage })))
 
-// Jobs & Applications
-import { JobsPage } from './pages/jobs/JobsPage'
-import { JobDetailPage } from './pages/jobs/JobDetailPage'
-import { CreateJobPage } from './pages/jobs/CreateJobPage'
-import { JobApplicationsPage } from './pages/jobs/JobApplicationsPage'
+// Jobs & Applications (Lazy Loaded)
+const JobsPage = React.lazy(() => import('./pages/jobs/JobsPage').then(m => ({ default: m.JobsPage })))
+const JobDetailPage = React.lazy(() => import('./pages/jobs/JobDetailPage').then(m => ({ default: m.JobDetailPage })))
+const CreateJobPage = React.lazy(() => import('./pages/jobs/CreateJobPage').then(m => ({ default: m.CreateJobPage })))
+const JobApplicationsPage = React.lazy(() => import('./pages/jobs/JobApplicationsPage').then(m => ({ default: m.JobApplicationsPage })))
 
-// Mentorship
-import { MentorDiscoveryPage } from './pages/mentorship/MentorDiscoveryPage'
-import { MyBookingsPage } from './pages/mentorship/MyBookingsPage'
-import { MentorshipAvailabilityPage } from './pages/mentorship/MentorshipAvailabilityPage'
+// Mentorship (Lazy Loaded)
+const MentorDiscoveryPage = React.lazy(() => import('./pages/mentorship/MentorDiscoveryPage').then(m => ({ default: m.MentorDiscoveryPage })))
+const MyBookingsPage = React.lazy(() => import('./pages/mentorship/MyBookingsPage').then(m => ({ default: m.MyBookingsPage })))
+const MentorshipAvailabilityPage = React.lazy(() => import('./pages/mentorship/MentorshipAvailabilityPage').then(m => ({ default: m.MentorshipAvailabilityPage })))
 
-// Campus & Alumni Events
-import EventsPage from './pages/events/EventsPage'
-import EventDetailPage from './pages/events/EventDetailPage'
+// Campus & Alumni Events (Lazy Loaded)
+const EventsPage = React.lazy(() => import('./pages/events/EventsPage'))
+const EventDetailPage = React.lazy(() => import('./pages/events/EventDetailPage'))
 
-// Real-Time Chat & Direct Messaging
-import MessagesPage from './pages/chat/MessagesPage'
+// Real-Time Chat & Direct Messaging (Lazy Loaded)
+const MessagesPage = React.lazy(() => import('./pages/chat/MessagesPage'))
 
-// Notifications
-import NotificationsPage from './pages/notifications/NotificationsPage'
+// Notifications (Lazy Loaded)
+const NotificationsPage = React.lazy(() => import('./pages/notifications/NotificationsPage'))
 
-// AI Career Assistant & Recommendations
-import AICareerAssistantPage from './pages/ai/AICareerAssistantPage'
-import AIMockInterviewPage from './pages/ai/AIMockInterviewPage'
-import AIReferralGeneratorPage from './pages/ai/AIReferralGeneratorPage'
-import GlobalAlumniAnalyticsPage from './pages/ai/GlobalAlumniAnalyticsPage'
-import { AIResumeScannerPage } from './pages/ai/AIResumeScannerPage'
-import { CareerPredictorPage } from './pages/ai/CareerPredictorPage'
+// AI Career Assistant & Recommendations (Lazy Loaded)
+const AICareerAssistantPage = React.lazy(() => import('./pages/ai/AICareerAssistantPage'))
+const AIMockInterviewPage = React.lazy(() => import('./pages/ai/AIMockInterviewPage'))
+const AIReferralGeneratorPage = React.lazy(() => import('./pages/ai/AIReferralGeneratorPage'))
+const GlobalAlumniAnalyticsPage = React.lazy(() => import('./pages/ai/GlobalAlumniAnalyticsPage'))
+const AIResumeScannerPage = React.lazy(() => import('./pages/ai/AIResumeScannerPage').then(m => ({ default: m.AIResumeScannerPage })))
+const CareerPredictorPage = React.lazy(() => import('./pages/ai/CareerPredictorPage').then(m => ({ default: m.CareerPredictorPage })))
 
-// Enterprise Community & Collaboration Features
-import NetworkGraphPage from './pages/network/NetworkGraphPage'
-import ProjectCollaborationPage from './pages/projects/ProjectCollaborationPage'
-import AlumniAchievementPage from './pages/achievements/AlumniAchievementPage'
-import DonationCampaignsPage from './pages/donations/DonationCampaignsPage'
+// Enterprise Community & Collaboration Features (Lazy Loaded)
+const NetworkGraphPage = React.lazy(() => import('./pages/network/NetworkGraphPage'))
+const ProjectCollaborationPage = React.lazy(() => import('./pages/projects/ProjectCollaborationPage'))
+const AlumniAchievementPage = React.lazy(() => import('./pages/achievements/AlumniAchievementPage'))
+const DonationCampaignsPage = React.lazy(() => import('./pages/donations/DonationCampaignsPage'))
 
-// User Profile & Settings
-import ProfilePage from './pages/profile/ProfilePage'
+// User Profile & Settings (Lazy Loaded)
+const ProfilePage = React.lazy(() => import('./pages/profile/ProfilePage'))
 
-// Admin Management
-import { AdminDashboard } from './pages/admin/AdminDashboard'
-import { AdminVerificationPage } from './pages/admin/AdminVerificationPage'
-import { AdminUserManagementPage } from './pages/admin/AdminUserManagementPage'
-import { AdminAuditLogsPage } from './pages/admin/AdminAuditLogsPage'
+// Admin Management (Lazy Loaded)
+const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
+const AdminVerificationPage = React.lazy(() => import('./pages/admin/AdminVerificationPage').then(m => ({ default: m.AdminVerificationPage })))
+const AdminUserManagementPage = React.lazy(() => import('./pages/admin/AdminUserManagementPage').then(m => ({ default: m.AdminUserManagementPage })))
+const AdminAuditLogsPage = React.lazy(() => import('./pages/admin/AdminAuditLogsPage').then(m => ({ default: m.AdminAuditLogsPage })))
+
+// Suspense Loading Fallback
+function PageLoader() {
+  return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 space-y-4">
+      <div className="w-12 h-12 border-4 border-[#244B3A]/20 border-t-[#244B3A] rounded-full animate-spin" />
+      <p className="text-sm font-medium text-[#244B3A]/80 tracking-wide animate-pulse">
+        Loading portal modules...
+      </p>
+    </div>
+  )
+}
 
 // 404 Fallback Page
 function NotFoundPage() {
@@ -92,7 +104,8 @@ export default function App() {
           <div className="min-h-screen flex flex-col bg-[#F5F1E8] text-[#333333] font-sans antialiased">
             <Navbar />
             <main className="flex-1">
-              <Routes>
+              <React.Suspense fallback={<PageLoader />}>
+                <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/about" element={<AboutPage />} />
@@ -380,7 +393,8 @@ export default function App() {
                 {/* Catch-All 404 */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
-            </main>
+            </React.Suspense>
+          </main>
             <Footer />
           </div>
         </SocketProvider>

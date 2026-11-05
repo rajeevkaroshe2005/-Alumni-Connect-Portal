@@ -10,14 +10,19 @@ import {
   CheckCircle2,
   PlusCircle,
   ArrowRight,
+  RotateCcw,
 } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { useDebounce } from '../../hooks/useDebounce'
+import { SkeletonCard } from '../../components/common/SkeletonLoader'
+import { EmptyState } from '../../components/common/EmptyState'
 
 export const JobsPage = () => {
   const { role } = useAuth()
   const [jobs, setJobs] = useState([])
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
   const [jobType, setJobType] = useState('')
   const [expLevel, setExpLevel] = useState('')
   const [loading, setLoading] = useState(true)
@@ -34,7 +39,7 @@ export const JobsPage = () => {
     setLoading(true)
     try {
       let url = `/jobs?page=${page}&per_page=10`
-      if (search) url += `&q=${encodeURIComponent(search)}`
+      if (debouncedSearch) url += `&q=${encodeURIComponent(debouncedSearch)}`
       if (jobType) url += `&job_type=${jobType}`
       if (expLevel) url += `&experience_level=${expLevel}`
 
@@ -52,7 +57,14 @@ export const JobsPage = () => {
 
   useEffect(() => {
     fetchJobs()
-  }, [page, jobType, expLevel])
+  }, [page, debouncedSearch, jobType, expLevel])
+
+  const handleResetFilters = () => {
+    setSearch('')
+    setJobType('')
+    setExpLevel('')
+    setPage(1)
+  }
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -166,29 +178,27 @@ export const JobsPage = () => {
               setExpLevel(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="px-3 py-2 bg-white border border-[#D8D2C4] rounded-xl text-xs font-medium text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#244B3A]"
           >
-            <option value="" className="text-slate-900 bg-white">All Experience Levels</option>
-            <option value="ENTRY" className="text-slate-900 bg-white">Entry Level (Fresh Graduates)</option>
-            <option value="MID" className="text-slate-900 bg-white">Mid Level (1-4 Years)</option>
-            <option value="SENIOR" className="text-slate-900 bg-white">Senior Level (5+ Years)</option>
+            <option value="" className="text-[#333333] bg-white">All Experience Levels</option>
+            <option value="ENTRY" className="text-[#333333] bg-white">Entry Level (Fresh Graduates)</option>
+            <option value="MID" className="text-[#333333] bg-white">Mid Level (1-4 Years)</option>
+            <option value="SENIOR" className="text-[#333333] bg-white">Senior Level (5+ Years)</option>
           </select>
         </div>
       </div>
 
       {/* Jobs Grid */}
       {loading ? (
-        <div className="py-16 text-center text-slate-500 text-sm">Loading opportunities...</div>
+        <SkeletonCard count={4} />
       ) : jobs.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
-          <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
-            <Briefcase className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-slate-900">No Jobs Found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            No opportunities matched your search criteria. Check back soon or try broader terms!
-          </p>
-        </div>
+        <EmptyState
+          icon={Briefcase}
+          title="No Job Postings Found"
+          description="No opportunities currently match your search criteria. Try broadening your keywords or clearing the experience level filter."
+          actionLabel="Reset Search Filters"
+          onAction={handleResetFilters}
+        />
       ) : (
         <div className="space-y-4">
           {jobs.map((job) => (

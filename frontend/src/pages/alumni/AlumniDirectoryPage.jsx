@@ -11,8 +11,12 @@ import {
   Calendar,
   MessageSquare,
   ArrowRight,
+  RotateCcw,
 } from 'lucide-react'
 import api from '../../services/api'
+import { useDebounce } from '../../hooks/useDebounce'
+import { SkeletonCard } from '../../components/common/SkeletonLoader'
+import { EmptyState } from '../../components/common/EmptyState'
 
 export const AlumniDirectoryPage = () => {
   const [alumni, setAlumni] = useState([])
@@ -27,6 +31,7 @@ export const AlumniDirectoryPage = () => {
   const [selectedYear, setSelectedYear] = useState('')
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
   const [page, setPage] = useState(1)
   const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
@@ -46,12 +51,12 @@ export const AlumniDirectoryPage = () => {
     fetchFilterOptions()
   }, [])
 
-  // Fetch alumni listing when filters change
+  // Fetch alumni listing when filters or debounced search change
   const fetchAlumni = async () => {
     setLoading(true)
     try {
       let url = `/alumni?page=${page}&per_page=12`
-      if (search) url += `&q=${encodeURIComponent(search)}`
+      if (debouncedSearch) url += `&q=${encodeURIComponent(debouncedSearch)}`
       if (selectedDept) url += `&department=${encodeURIComponent(selectedDept)}`
       if (selectedCompany) url += `&company=${encodeURIComponent(selectedCompany)}`
       if (selectedYear) url += `&graduation_year=${selectedYear}`
@@ -71,7 +76,16 @@ export const AlumniDirectoryPage = () => {
 
   useEffect(() => {
     fetchAlumni()
-  }, [page, selectedDept, selectedCompany, selectedYear, verifiedOnly])
+  }, [page, debouncedSearch, selectedDept, selectedCompany, selectedYear, verifiedOnly])
+
+  const handleResetFilters = () => {
+    setSearch('')
+    setSelectedDept('')
+    setSelectedCompany('')
+    setSelectedYear('')
+    setVerifiedOnly(false)
+    setPage(1)
+  }
 
   const handleSearchSubmit = (e) => {
     e.preventDefault()
@@ -94,38 +108,48 @@ export const AlumniDirectoryPage = () => {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+      <div className="bg-white rounded-2xl border border-[#D8D2C4] p-5 shadow-sm space-y-4">
         <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+            <Search className="w-4 h-4 text-[#333333]/40 absolute left-3.5 top-3.5" />
             <input
               type="text"
-              placeholder="Search by name, company, position, or skills (e.g. Python, Google, ML)..."
+              placeholder="Live search by name, company, position, or skills (e.g. Python, Google, ML)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#D8D2C4] rounded-xl text-sm text-[#333333] placeholder:text-[#333333]/40 focus:outline-none focus:ring-2 focus:ring-[#244B3A]/20 focus:border-[#244B3A] transition"
             />
           </div>
           <button
             type="submit"
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm shadow-sm transition"
+            className="px-6 py-2.5 bg-[#244B3A] hover:bg-[#1B3B2B] text-white font-semibold rounded-xl text-sm shadow-sm transition"
           >
             Search
           </button>
+          {(search || selectedDept || selectedCompany || selectedYear || verifiedOnly) && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="px-4 py-2.5 border border-[#D8D2C4] hover:bg-[#F5F1E8] text-[#333333] font-medium rounded-xl text-sm transition flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#244B3A]" />
+              <span>Reset</span>
+            </button>
+          )}
         </form>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t border-[#D8D2C4]/60">
           <select
             value={selectedDept}
             onChange={(e) => {
               setSelectedDept(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="px-3 py-2 bg-white border border-[#D8D2C4] rounded-xl text-xs font-medium text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#244B3A]"
           >
-            <option value="" className="text-slate-900 bg-white">All Departments</option>
+            <option value="" className="text-[#333333] bg-white">All Departments</option>
             {filters.departments?.map((d, i) => (
-              <option key={i} value={d} className="text-slate-900 bg-white">{d}</option>
+              <option key={i} value={d} className="text-[#333333] bg-white">{d}</option>
             ))}
           </select>
 
@@ -135,11 +159,11 @@ export const AlumniDirectoryPage = () => {
               setSelectedCompany(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="px-3 py-2 bg-white border border-[#D8D2C4] rounded-xl text-xs font-medium text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#244B3A]"
           >
-            <option value="" className="text-slate-900 bg-white">All Companies</option>
+            <option value="" className="text-[#333333] bg-white">All Companies</option>
             {filters.companies?.map((c, i) => (
-              <option key={i} value={c} className="text-slate-900 bg-white">{c}</option>
+              <option key={i} value={c} className="text-[#333333] bg-white">{c}</option>
             ))}
           </select>
 
@@ -149,15 +173,15 @@ export const AlumniDirectoryPage = () => {
               setSelectedYear(e.target.value)
               setPage(1)
             }}
-            className="px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="px-3 py-2 bg-white border border-[#D8D2C4] rounded-xl text-xs font-medium text-[#333333] focus:outline-none focus:ring-1 focus:ring-[#244B3A]"
           >
-            <option value="" className="text-slate-900 bg-white">All Graduation Years</option>
+            <option value="" className="text-[#333333] bg-white">All Graduation Years</option>
             {filters.graduation_years?.map((y, i) => (
-              <option key={i} value={y} className="text-slate-900 bg-white">Class of {y}</option>
+              <option key={i} value={y} className="text-[#333333] bg-white">Class of {y}</option>
             ))}
           </select>
 
-          <label className="flex items-center gap-2 px-3 py-2 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-900 cursor-pointer select-none">
+          <label className="flex items-center gap-2 px-3 py-2 bg-white border border-[#D8D2C4] rounded-xl text-xs font-semibold text-[#333333] cursor-pointer select-none hover:bg-[#F5F1E8]/50 transition">
             <input
               type="checkbox"
               checked={verifiedOnly}
@@ -165,10 +189,10 @@ export const AlumniDirectoryPage = () => {
                 setVerifiedOnly(e.target.checked)
                 setPage(1)
               }}
-              className="rounded text-indigo-600 focus:ring-indigo-500"
+              className="rounded accent-[#244B3A] text-[#244B3A] focus:ring-[#244B3A]"
             />
             <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#244B3A]" />
               Verified Alumni Only
             </span>
           </label>
@@ -177,17 +201,15 @@ export const AlumniDirectoryPage = () => {
 
       {/* Directory Grid */}
       {loading ? (
-        <div className="py-16 text-center text-slate-500 text-sm">Searching verified alumni directory...</div>
+        <SkeletonCard count={6} />
       ) : alumni.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
-          <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto">
-            <Users className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-slate-900">No Alumni Matched Your Filters</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Try adjusting your search criteria or clearing specific department/company filters.
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="No Alumni Matched Your Filters"
+          description="Try broadening your search term or clearing specific department, company, or graduation year filters."
+          actionLabel="Clear All Filters"
+          onAction={handleResetFilters}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {alumni.map((item) => {

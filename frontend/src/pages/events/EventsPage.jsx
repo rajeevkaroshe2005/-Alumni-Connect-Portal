@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Calendar, MapPin, Users, Plus, Search, Filter, Video, 
-  Clock, CheckCircle, AlertCircle, X, ExternalLink
+  Clock, CheckCircle, AlertCircle, X, ExternalLink, RotateCcw
 } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useDebounce } from '../../hooks/useDebounce';
+import { SkeletonCard } from '../../components/common/SkeletonLoader';
+import { EmptyState } from '../../components/common/EmptyState';
 
 export default function EventsPage() {
   const { user } = useAuth();
@@ -13,6 +16,7 @@ export default function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedType, setSelectedType] = useState('ALL');
   const [actionLoading, setActionLoading] = useState(null);
 
@@ -37,7 +41,7 @@ export default function EventsPage() {
       setError('');
       const params = {};
       if (selectedType !== 'ALL') params.event_type = selectedType;
-      if (searchQuery.trim()) params.q = searchQuery.trim();
+      if (debouncedSearch.trim()) params.q = debouncedSearch.trim();
 
       const res = await api.get('/events', { params });
       if (res?.success) {
@@ -52,7 +56,7 @@ export default function EventsPage() {
 
   useEffect(() => {
     fetchEvents();
-  }, [selectedType]);
+  }, [selectedType, debouncedSearch]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -137,13 +141,13 @@ export default function EventsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-gray-200 dark:border-gray-800 gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-[#D8D2C4] gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Calendar className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-3xl font-bold text-[#333333] flex items-center gap-2">
+            <Calendar className="w-8 h-8 text-[#244B3A]" />
             Campus & Alumni Events
           </h1>
-          <p className="mt-1 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 text-[#333333]/70 text-sm">
             Connect through technical webinars, masterclasses, reunions, and professional networking meetups.
           </p>
         </div>
@@ -151,7 +155,7 @@ export default function EventsPage() {
         {(user?.role === 'ALUMNI' || user?.role === 'ADMIN') && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-[#244B3A] hover:bg-[#1B3B2B] transition"
           >
             <Plus className="w-4 h-4 mr-2" />
             Schedule Event
@@ -160,36 +164,49 @@ export default function EventsPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="mt-6 flex flex-col md:flex-row gap-4 items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="mt-6 flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl border border-[#D8D2C4] shadow-sm">
         <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2 w-full">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-[#333333]/40" />
             <input
               type="text"
-              placeholder="Search by topic, speaker, or keyword..."
+              placeholder="Live search by topic, speaker, or keyword..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 border border-[#D8D2C4] rounded-xl bg-white text-[#333333] placeholder:text-[#333333]/40 focus:outline-none focus:ring-2 focus:ring-[#244B3A]/20 focus:border-[#244B3A] text-sm"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium transition"
+            className="px-5 py-2.5 bg-[#244B3A] hover:bg-[#1B3B2B] text-white rounded-xl text-sm font-semibold transition shadow-sm"
           >
             Search
           </button>
+          {(searchQuery || selectedType !== 'ALL') && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedType('ALL');
+              }}
+              className="px-3.5 py-2.5 border border-[#D8D2C4] hover:bg-[#F5F1E8] text-[#333333] rounded-xl text-sm font-medium transition flex items-center gap-1"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-[#244B3A]" />
+              <span>Reset</span>
+            </button>
+          )}
         </form>
 
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-          <Filter className="w-4 h-4 text-gray-400 hidden sm:block" />
+        <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+          <Filter className="w-4 h-4 text-[#333333]/40 hidden sm:block mr-1" />
           {['ALL', 'WEBINAR', 'WORKSHOP', 'REUNION', 'NETWORKING'].map((type) => (
             <button
               key={type}
               onClick={() => setSelectedType(type)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                 selectedType === type
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-[#244B3A] text-white shadow-sm'
+                  : 'bg-[#F5F1E8] text-[#333333] hover:bg-[#D8D2C4]/40'
               }`}
             >
               {type}
@@ -200,24 +217,25 @@ export default function EventsPage() {
 
       {/* Events Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="animate-pulse bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 h-64" />
-          ))}
+        <div className="mt-8">
+          <SkeletonCard count={6} />
         </div>
       ) : error ? (
-        <div className="mt-8 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 flex items-center gap-2">
+        <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span>{error}</span>
         </div>
       ) : events.length === 0 ? (
-        <div className="mt-12 text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700">
-          <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">No events scheduled</h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 max-w-sm mx-auto">
-            No events match your current filter criteria. Try adjusting your search query or check back soon.
-          </p>
-        </div>
+        <EmptyState
+          icon={Calendar}
+          title="No Events Scheduled"
+          description="No events match your current filter criteria. Try adjusting your search query or check back soon."
+          actionLabel="View All Events"
+          onAction={() => {
+            setSearchQuery('');
+            setSelectedType('ALL');
+          }}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {events.map((evt) => (
