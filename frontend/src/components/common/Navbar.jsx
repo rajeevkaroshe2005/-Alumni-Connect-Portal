@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   GraduationCap,
@@ -22,6 +22,30 @@ export const Navbar = () => {
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false)
   const [communityDropdownOpen, setCommunityDropdownOpen] = useState(false)
   const [unreadNotifs, setUnreadNotifs] = useState(0)
+
+  const communityRef = useRef(null)
+  const aiRef = useRef(null)
+
+  // Close dropdowns on route transition
+  useEffect(() => {
+    setCommunityDropdownOpen(false)
+    setAiDropdownOpen(false)
+    setMobileMenuOpen(false)
+  }, [location.pathname])
+
+  // Click outside listener for dropdowns
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (communityRef.current && !communityRef.current.contains(e.target)) {
+        setCommunityDropdownOpen(false)
+      }
+      if (aiRef.current && !aiRef.current.contains(e.target)) {
+        setAiDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -116,12 +140,16 @@ export const Navbar = () => {
               </Link>
 
               {/* Community & Venture Hub Dropdown */}
-              <div className="relative">
+              <div
+                ref={communityRef}
+                className="relative"
+                onMouseEnter={() => setCommunityDropdownOpen(true)}
+                onMouseLeave={() => setCommunityDropdownOpen(false)}
+              >
                 <button
                   type="button"
-                  onClick={() => setCommunityDropdownOpen(!communityDropdownOpen)}
-                  onBlur={() => setTimeout(() => setCommunityDropdownOpen(false), 200)}
-                  className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
+                  onClick={() => setCommunityDropdownOpen((prev) => !prev)}
+                  className={`flex items-center gap-1 px-3 py-2 rounded-lg transition-colors cursor-pointer ${
                     location.pathname === '/collaborations' || location.pathname === '/achievements' || location.pathname === '/donations'
                       ? 'text-[#244B3A] bg-[#244B3A]/10 font-bold border-b-2 border-[#244B3A]'
                       : 'hover:text-[#244B3A] hover:bg-[#F5F1E8]'
@@ -132,36 +160,42 @@ export const Navbar = () => {
                 </button>
 
                 {communityDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-56 bg-white border border-[#D8D2C4] rounded-xl shadow-lg py-2 z-50 space-y-1">
-                    <Link
-                      to="/collaborations"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🚀 Project Collaboration
-                    </Link>
-                    <Link
-                      to="/achievements"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🏆 Achievement Wall
-                    </Link>
-                    <Link
-                      to="/donations"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🌱 Alumni Giving & Campaigns
-                    </Link>
+                  <div className="absolute top-full left-0 pt-1 w-64 z-50">
+                    <div className="bg-white border border-[#D8D2C4] rounded-xl shadow-xl py-2 space-y-1">
+                      <Link
+                        to="/collaborations"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🚀 Project Collaboration
+                      </Link>
+                      <Link
+                        to="/achievements"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🏆 Achievement Wall
+                      </Link>
+                      <Link
+                        to="/donations"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🌱 Alumni Giving & Campaigns
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* AI Hub Suite Dropdown */}
-              <div className="relative">
+              <div
+                ref={aiRef}
+                className="relative"
+                onMouseEnter={() => setAiDropdownOpen(true)}
+                onMouseLeave={() => setAiDropdownOpen(false)}
+              >
                 <button
                   type="button"
-                  onClick={() => setAiDropdownOpen(!aiDropdownOpen)}
-                  onBlur={() => setTimeout(() => setAiDropdownOpen(false), 200)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors font-semibold border ${
+                  onClick={() => setAiDropdownOpen((prev) => !prev)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors font-semibold border cursor-pointer ${
                     location.pathname.startsWith('/ai') || location.pathname === '/resume-scanner' || location.pathname === '/career-predictor' || location.pathname === '/mock-interview' || location.pathname === '/analytics-hub' || location.pathname === '/network-graph'
                       ? 'text-[#244B3A] bg-[#C4A878]/30 border-[#C4A878]'
                       : 'text-[#244B3A] bg-[#C4A878]/20 hover:bg-[#C4A878]/30 border-[#C4A878]'
@@ -173,49 +207,51 @@ export const Navbar = () => {
                 </button>
 
                 {aiDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-56 bg-white border border-[#D8D2C4] rounded-xl shadow-lg py-2 z-50 space-y-1">
-                    <Link
-                      to="/network-graph"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🕸️ Smart Connection Graph
-                    </Link>
-                    <Link
-                      to="/ai"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      ✨ Recommendations & Matcher
-                    </Link>
-                    <Link
-                      to="/resume-scanner"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      📄 ATS Resume Scanner
-                    </Link>
-                    <Link
-                      to="/career-predictor"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      📈 Career & Salary Predictor
-                    </Link>
-                    <Link
-                      to="/mock-interview"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🎯 AI Mock Interview Simulator
-                    </Link>
-                    <Link
-                      to="/ai-referral"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🤝 Smart Referral & Outreach
-                    </Link>
-                    <Link
-                      to="/analytics-hub"
-                      className="block px-4 py-2 text-xs font-bold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A]"
-                    >
-                      🌐 Global Alumni Matrix
-                    </Link>
+                  <div className="absolute top-full left-0 pt-1 w-64 z-50">
+                    <div className="bg-white border border-[#D8D2C4] rounded-xl shadow-xl py-2 space-y-1">
+                      <Link
+                        to="/network-graph"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🕸️ Smart Connection Graph
+                      </Link>
+                      <Link
+                        to="/ai"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        ✨ Recommendations & Matcher
+                      </Link>
+                      <Link
+                        to="/resume-scanner"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        📄 ATS Resume Scanner
+                      </Link>
+                      <Link
+                        to="/career-predictor"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        📈 Career & Salary Predictor
+                      </Link>
+                      <Link
+                        to="/mock-interview"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🎯 AI Mock Interview Simulator
+                      </Link>
+                      <Link
+                        to="/ai-referral"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🤝 Smart Referral & Outreach
+                      </Link>
+                      <Link
+                        to="/analytics-hub"
+                        className="block px-4 py-2.5 text-xs font-semibold text-[#333333] hover:bg-[#F5F1E8] hover:text-[#244B3A] transition-colors"
+                      >
+                        🌐 Global Alumni Matrix
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
