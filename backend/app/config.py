@@ -19,7 +19,7 @@ def _determine_database_uri():
         return f"sqlite:///{DEFAULT_SQLITE_PATH}"
 
     db_user = os.getenv('DB_USER', 'root')
-    db_password = os.getenv('DB_PASSWORD', 'rajeev')
+    db_password = os.getenv('DB_PASSWORD', 'rootpassword')
     db_host = os.getenv('DB_HOST', '127.0.0.1')
     db_port = os.getenv('DB_PORT', '3306')
     db_name = os.getenv('DB_NAME', 'alumni_portal')
@@ -40,7 +40,7 @@ class Config:
 
     # Database configuration: MySQL is primary database per project credentials; fallback to DATABASE_URL or local SQLite if unavailable
     DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'rajeev')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'rootpassword')
     DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
     DB_PORT = os.getenv('DB_PORT', '3306')
     DB_NAME = os.getenv('DB_NAME', 'alumni_portal')
