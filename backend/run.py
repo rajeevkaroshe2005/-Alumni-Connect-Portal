@@ -42,4 +42,9 @@ def seed_db():
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
+    print(f"\n=======================================================")
+    print(f" 🚀 Backend started!")
+    print(f" 📦 Active Database: {app.config['SQLALCHEMY_DATABASE_URI']}")
+    print(f" 🌐 Running on: http://127.0.0.1:{port}")
+    print(f"=======================================================\n")
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
