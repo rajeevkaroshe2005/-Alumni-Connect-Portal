@@ -32,6 +32,34 @@ def seed_all():
     )
     db.session.add(admin_profile)
 
+    # Rajeev Karoshe (Platform Lead & Alumni)
+    u_rajeev = User(email="rajeev@gmail.com", password_hash=pwd_hash, role="ALUMNI", is_active=True)
+    db.session.add(u_rajeev)
+    db.session.flush()
+
+    p_rajeev = Profile(
+        user_id=u_rajeev.id,
+        first_name="Rajeev",
+        last_name="Karoshe",
+        headline="Software Engineer & Platform Lead",
+        bio="Alumni member and platform lead.",
+        location="Bengaluru, India",
+        skills="Python, React, Flask, SQL, Web Development",
+    )
+    db.session.add(p_rajeev)
+
+    ad_rajeev = AlumniDetail(
+        user_id=u_rajeev.id,
+        graduation_year=2024,
+        degree="B.Tech Computer Science & Engineering",
+        department="Computer Science & Engineering",
+        current_company="Tech Corp",
+        current_position="Software Engineer",
+        industry="Information Technology",
+        verification_status="VERIFIED",
+    )
+    db.session.add(ad_rajeev)
+
     # 2. Alumni Accounts
     # Alumni 1: Priya Sharma (Google)
     a1 = User(email="priya.sharma@alumni.edu", password_hash=pwd_hash, role="ALUMNI", is_active=True)
@@ -219,6 +247,62 @@ def seed_all():
         interests="Fullstack Development, Cloud Computing, Open Source, System Design",
     )
     db.session.add(sd1)
+
+    # Student 2: Parth Chavan
+    s_parth = User(email="parth@gmail.com", password_hash=pwd_hash, role="STUDENT", is_active=True)
+    db.session.add(s_parth)
+    db.session.flush()
+
+    sp_parth = Profile(
+        user_id=s_parth.id,
+        first_name="Parth",
+        last_name="Chavan",
+        headline="Student at University | Aspiring Software Engineer",
+        bio="Passionate CSE student exploring web development, cloud, and distributed architectures.",
+        location="Campus Engineering Wing",
+        skills="React, Node.js, Python, Flask, SQL, Web Development",
+    )
+    db.session.add(sp_parth)
+
+    sd_parth = StudentDetail(
+        user_id=s_parth.id,
+        roll_number="CS23B1089",
+        current_year=4,
+        degree="B.Tech Computer Science & Engineering",
+        department="Computer Science & Engineering",
+        expected_graduation_year=2026,
+        cgpa=8.75,
+        interests="Web Systems, Distributed Computing, AI/ML, Cloud Platforms",
+    )
+    db.session.add(sd_parth)
+
+    # Student 3: Riya Jain
+    s_riya = User(email="riya298@gmail.com", password_hash=pwd_hash, role="STUDENT", is_active=True)
+    db.session.add(s_riya)
+    db.session.flush()
+
+    sp_riya = Profile(
+        user_id=s_riya.id,
+        first_name="Riya",
+        last_name="Jain",
+        headline="Student at University | Data & Fullstack Engineering",
+        bio="Interested in backend API design, database modeling, and alumni mentorship.",
+        location="Campus Engineering Wing",
+        skills="Python, SQL, React, Data Analysis, JavaScript",
+    )
+    db.session.add(sp_riya)
+
+    sd_riya = StudentDetail(
+        user_id=s_riya.id,
+        roll_number="CS23B1092",
+        current_year=4,
+        degree="B.Tech Computer Science & Engineering",
+        department="Computer Science & Engineering",
+        expected_graduation_year=2026,
+        cgpa=8.90,
+        interests="Backend Development, Database Systems, Cloud Computing",
+    )
+    db.session.add(sd_riya)
 
     # Student 2: Sneha Rao
     s2 = User(email="sneha.rao@student.edu", password_hash=pwd_hash, role="STUDENT", is_active=True)
