@@ -40,4 +40,4 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://alumni-connect-backend.onrender.com/api/v1
+        value: https://alumni-connect-backend-j95p.onrender.com/api/v1
