@@ -67,7 +67,7 @@ If you prefer to configure the services manually on Render:
    - **Root Directory:** `backend`
    - **Environment / Runtime:** `Python 3`
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT run:app`
+   - **Start Command:** `gunicorn -w 1 --threads 50 --bind 0.0.0.0:$PORT run:app`
    - **Plan:** Free
 4. Under **Environment Variables**, add:
    | Key | Value | Description |
