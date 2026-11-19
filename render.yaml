@@ -26,14 +26,14 @@ services:
 
   # -------------------------------------------------------------
   # Frontend Static Site (React 19 + Vite + Tailwind v4)
+  # (Note: Static sites are served via CDN and do not use a plan field)
   # -------------------------------------------------------------
   - type: web
     name: alumni-connect-frontend
     runtime: static
     rootDir: frontend
-    plan: free
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: ./dist
     routes:
       - type: rewrite
         source: /*
