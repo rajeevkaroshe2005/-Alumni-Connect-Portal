@@ -88,15 +88,15 @@ def create_app(config_name=None):
     def handle_server_error(e):
         return api_error("An internal error occurred. Please try again later.", 500)
 
-    @app.route('/')
-    def root_index():
-        return jsonify({
-            "status": "online",
-            "service": "Alumni Connect Portal Backend API",
-            "message": "Backend API is running successfully! Open http://localhost:5173 for the frontend website interface.",
-            "frontend_url": "http://localhost:5173",
-            "api_prefix": "/api"
-        }), 200
+    # Serve Frontend Single-Page Application (SPA) & Static Assets
+    from flask import send_from_directory
+
+    candidates = [
+        os.path.join(os.path.dirname(__file__), 'static_dist'),
+        os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'frontend', 'dist')),
+        os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'dist')),
+    ]
+    frontend_dist_dir = next((d for d in candidates if os.path.exists(os.path.join(d, 'index.html'))), candidates[0])
 
     @app.route('/api')
     @app.route('/api/health')
@@ -105,6 +105,26 @@ def create_app(config_name=None):
             "status": "healthy",
             "service": "Alumni Connect Portal API",
             "version": "1.0.0"
+        }), 200
+
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve_frontend(path):
+        if path.startswith('api') or path.startswith('socket.io'):
+            return api_error("The requested resource was not found.", 404)
+
+        target_file = os.path.join(frontend_dist_dir, path)
+        if path and os.path.isfile(target_file):
+            return send_from_directory(frontend_dist_dir, path)
+
+        index_file = os.path.join(frontend_dist_dir, 'index.html')
+        if os.path.exists(index_file):
+            return send_from_directory(frontend_dist_dir, 'index.html')
+
+        return jsonify({
+            "status": "online",
+            "service": "Alumni Connect Portal Backend API",
+            "message": "Frontend static build not found."
         }), 200
 
     # Register blueprints under /api and /api/v1 versioned prefixes
