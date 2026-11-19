@@ -1,0 +1,43 @@
+services:
+  # -------------------------------------------------------------
+  # Backend Web Service (Flask + SocketIO + SQLAlchemy)
+  # -------------------------------------------------------------
+  - type: web
+    name: alumni-connect-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT run:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: AUTO_SEED
+        value: "true"
+      - key: USE_SQLITE
+        value: "true"
+
+  # -------------------------------------------------------------
+  # Frontend Static Site (React 19 + Vite + Tailwind v4)
+  # -------------------------------------------------------------
+  - type: web
+    name: alumni-connect-frontend
+    runtime: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://alumni-connect-backend.onrender.com/api/v1

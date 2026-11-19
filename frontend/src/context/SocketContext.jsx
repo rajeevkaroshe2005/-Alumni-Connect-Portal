@@ -18,8 +18,24 @@ export const SocketProvider = ({ children }) => {
       return
     }
 
+    // Determine socket target URL
+    const getSocketUrl = () => {
+      if (import.meta.env.VITE_SOCKET_URL) {
+        return import.meta.env.VITE_SOCKET_URL
+      }
+      const apiBase = import.meta.env.VITE_API_BASE_URL
+      if (apiBase && /^https?:\/\//i.test(apiBase)) {
+        try {
+          return new URL(apiBase).origin
+        } catch {
+          // ignore parsing error, fallback to origin
+        }
+      }
+      return window.location.origin
+    }
+
     // Connect to WebSocket server
-    const socketInstance = io(window.location.origin, {
+    const socketInstance = io(getSocketUrl(), {
       path: '/socket.io',
       auth: { token },
       transports: ['websocket', 'polling'],

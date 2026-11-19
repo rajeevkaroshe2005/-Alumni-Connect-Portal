@@ -165,6 +165,31 @@ Frontend will start at: `http://localhost:5173`
 
 ---
 
+## 🚀 Cloud Deployment on Render
+
+The platform is fully pre-configured for 1-click cloud deployment on [Render](https://render.com) using the included `render.yaml` Blueprint.
+
+### 1-Click Blueprint Deployment:
+1. Ensure your repository changes are pushed to GitHub (`git push origin main`).
+2. Go to [Render Dashboard](https://dashboard.render.com) and click **New +** > **Blueprint**.
+3. Select your repository: `https://github.com/rajeevkaroshe2005/-Alumni-Connect-Portal.git`.
+4. Render automatically builds and launches:
+   - **Backend Web Service (`alumni-connect-backend`)**: Python runtime with Gunicorn + Eventlet (WebSocket enabled) and auto-seeded sample data.
+   - **Frontend Static Site (`alumni-connect-frontend`)**: React 19 + Vite SPA with client-side rewrite rules.
+5. In the frontend service settings on Render, set `VITE_API_BASE_URL` to your backend URL (`https://<backend-name>.onrender.com/api/v1`).
+
+👉 **For complete step-by-step guidance, see the [Render Deployment Guide](docs/render-deployment.md).**
+
+### Pre-Seeded Demonstration Accounts:
+| Role | Email | Password |
+|---|---|---|
+| **Platform Admin** | `admin@alumniportal.edu` | `Password123!` |
+| **Alumni (Google)** | `priya.sharma@alumni.edu` | `Password123!` |
+| **Alumni (Amazon)** | `rahul.verma@alumni.edu` | `Password123!` |
+| **Student** | `aarav.patel@student.edu` | `Password123!` |
+
+---
+
 ## 🧪 Testing & Quality Assurance
 
 ### Run Backend Integration Tests (Pytest)

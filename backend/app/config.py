@@ -14,6 +14,9 @@ DEFAULT_SQLITE_PATH = os.path.join(BASE_DIR, 'alumni_portal.db').replace('\\', '
 def _determine_database_uri():
     explicit_url = os.getenv('DATABASE_URL') or os.getenv('SQLALCHEMY_DATABASE_URI')
     if explicit_url:
+        # Render PostgreSQL uses postgres:// which SQLAlchemy 1.4+ rejects in favor of postgresql://
+        if explicit_url.startswith('postgres://'):
+            explicit_url = explicit_url.replace('postgres://', 'postgresql://', 1)
         return explicit_url
     if os.getenv('USE_SQLITE', 'false').lower() == 'true':
         return f"sqlite:///{DEFAULT_SQLITE_PATH}"
@@ -38,7 +41,7 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'default-jwt-secret-key-change-me')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES_MINUTES', 1440)))
 
-    # Database configuration: MySQL is primary database per project credentials; fallback to DATABASE_URL or local SQLite if unavailable
+    # Database configuration
     DB_USER = os.getenv('DB_USER', 'root')
     DB_PASSWORD = os.getenv('DB_PASSWORD', 'rootpassword')
     DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
@@ -54,9 +57,10 @@ class Config:
         }
     )
 
-    CORS_ORIGINS = [
+    _cors_env = os.getenv('CORS_ORIGINS', '*')
+    CORS_ORIGINS = '*' if _cors_env.strip() == '*' else [
         origin.strip()
-        for origin in os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+        for origin in _cors_env.split(',')
         if origin.strip()
     ]
 
