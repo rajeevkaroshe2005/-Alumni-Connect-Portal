@@ -1,9 +1,10 @@
 services:
   # -------------------------------------------------------------
-  # Backend Web Service (Flask + SocketIO + SQLAlchemy)
+  # Unified Web Service (Flask API + React Frontend + WebSockets)
+  # Serves both the complete frontend UI and backend on one link!
   # -------------------------------------------------------------
   - type: web
-    name: alumni-connect-backend
+    name: alumni-connect-portal
     runtime: python
     rootDir: backend
     plan: free
@@ -23,21 +24,3 @@ services:
         value: "true"
       - key: USE_SQLITE
         value: "true"
-
-  # -------------------------------------------------------------
-  # Frontend Static Site (React 19 + Vite + Tailwind v4)
-  # (Note: Static sites are served via CDN and do not use a plan field)
-  # -------------------------------------------------------------
-  - type: web
-    name: alumni-connect-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://alumni-connect-backend-j95p.onrender.com/api/v1
