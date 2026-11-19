@@ -18,7 +18,7 @@ def _determine_database_uri():
         if explicit_url.startswith('postgres://'):
             explicit_url = explicit_url.replace('postgres://', 'postgresql://', 1)
         return explicit_url
-    if os.getenv('USE_SQLITE', 'false').lower() == 'true':
+    if os.getenv('USE_SQLITE', 'true').lower() == 'true':
         return f"sqlite:///{DEFAULT_SQLITE_PATH}"
 
     db_user = os.getenv('DB_USER', 'root')
